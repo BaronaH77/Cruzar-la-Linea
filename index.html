@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale: 1.0"/>
+  <title>Cruzar la Línea – ARF · ARDYTI · AROFUSA · LIFA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1a2e; height: 100vh; display: flex; flex-direction: column; }
+    header {
+      background: linear-gradient(135deg, #1a3a6b 0%, #0f2a52 100%);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-bottom: 3px solid #f0c040;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    .header-icon { font-size: 1.8rem; }
+    .header-text h1 { font-size: 1.1rem; font-weight: 700; color: #f0c040; letter-spacing: 1px; }
+    .header-text p { font-size: 0.72rem; color: #a8c8f0; margin-top: 1px; }
+    .header-badges { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .header-badge {
+      background: #f0c040; color: #1a3a6b; font-weight: 700;
+      font-size: 0.72rem; padding: 3px 12px; border-radius: 20px; white-space: nowrap;
+    }
+    .header-badge.ard { background: #e07b20; color: white; }
+    .header-badge.afs { background: #c0392b; color: white; }
+    .header-badge.lfa { background: #2e7d32; color: white; }
+    #map { flex: 1; }
+
+    /* ── Barra de filtros superior ── */
+    .filter-bar {
+      background: #0f2a52;
+      border-bottom: 2px solid #1a3a6b;
+      display: flex; align-items: stretch;
+      overflow-x: auto; overflow-y: visible;
+      gap: 0;
+      flex-shrink: 0;
+      scrollbar-width: none;
+      position: relative; z-index: 1100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .filter-bar::-webkit-scrollbar { display: none; }
+
+    .filter-group {
+      display: flex; align-items: center; gap: 4px;
+      padding: 5px 10px; flex-shrink: 0;
+      border-right: 1px solid rgba(255,255,255,0.1);
+    }
+    .filter-group:last-child { border-right: none; }
+
+    .filter-group-label {
+      font-size: 0.52rem; font-weight: 700; color: rgba(255,255,255,0.35);
+      letter-spacing: 1px; text-transform: uppercase;
+      writing-mode: horizontal-tb; white-space: nowrap;
+      margin-right: 2px;
+    }
+
+    /* Tabs de liga */
+    .liga-tab {
+      padding: 4px 9px; border: 1.5px solid rgba(255,255,255,0.2); border-radius: 20px;
+      font-size: 0.67rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+      transition: all 0.18s; background: transparent; color: rgba(255,255,255,0.55);
+    }
+    .liga-tab:hover { border-color: rgba(255,255,255,0.6); color: white; }
+    .liga-tab.active-arf  { background: #1a6b3a; color: white; border-color: #1a6b3a; }
+    .liga-tab.active-ard  { background: #e07b20; color: white; border-color: #e07b20; }
+    .liga-tab.active-afs  { background: #c0392b; color: white; border-color: #c0392b; }
+    .liga-tab.active-lfa  { background: #2e7d32; color: white; border-color: #2e7d32; }
+    .liga-tab.active-both { background: #f0c040; color: #1a3a6b; border-color: #f0c040; }
+
+    /* Botones de división, colegios, etc */
+    .filter-btn {
+      background: transparent; border: 1.5px solid rgba(255,255,255,0.2); border-radius: 20px;
+      padding: 3px 9px; font-size: 0.63rem; font-weight: 600; cursor: pointer;
+      transition: all 0.18s; color: rgba(255,255,255,0.55); white-space: nowrap;
+    }
+    .filter-btn:hover { border-color: rgba(255,255,255,0.6); color: white; }
+    .filter-btn.active[data-div="all"]  { background:#e0e0e0; color:#222; border-color:#e0e0e0; }
+    .filter-btn.active[data-div="A"]    { background:#1a6b3a; color:white; border-color:#1a6b3a; }
+    .filter-btn.active[data-div="B"]    { background:#2980b9; color:white; border-color:#2980b9; }
+    .filter-btn.active[data-div="C"]    { background:#8e44ad; color:white; border-color:#8e44ad; }
+    .filter-btn.active.toggle-on        { background:#e74c3c; color:white; border-color:#e74c3c; }
+    #btnEsc_all.active    { background:#e0e0e0; color:#222; border-color:#e0e0e0; }
+    #btnEsc_Pública.active { background:#0d6efd; color:white; border-color:#0d6efd; }
+    #btnEsc_Privada.active { background:#e91e8c; color:white; border-color:#e91e8c; }
+
+    /* Grilla de zonas en la barra */
+    .zona-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+    }
+    .zona-btn {
+      padding: 3px 4px; border: 1.5px solid rgba(255,255,255,0.18); border-radius: 5px;
+      font-size: 0.55rem; font-weight: 700; cursor: pointer; text-align: center;
+      background: transparent; color: rgba(255,255,255,0.45); transition: all 0.15s;
+      line-height: 1.2; white-space: nowrap;
+    }
+    .zona-btn:hover { border-color: rgba(255,255,255,0.6); color: white; }
+    .zona-btn.active { background: #1a3a6b; color: white; border-color: #4a7abf; }
+    .zona-btn.centro { background: rgba(240,192,64,0.15); color: #f0c040; border-color: rgba(240,192,64,0.4); }
+    .zona-btn.centro.active { background: #f0c040; color: #1a3a6b; border-color: #f0c040; }
+    #labelZona { font-size:0.58rem; color:rgba(255,255,255,0.45); white-space:nowrap; padding-left:4px; }
+    #labelColegios { font-size:0.55rem; color:rgba(255,255,255,0.4); white-space:nowrap; max-width:90px; line-height:1.3; }
+
+    .bar-divider { width:1px; background:rgba(255,255,255,0.1); align-self:stretch; flex-shrink:0; }
+    .separator { display:none; } /* ya no se usa */
+
+    /* ── Pin de usuario ── */
+    .ping-mode #map { cursor: crosshair !important; }
+    @keyframes pingPulse {
+      0%   { transform: scale(1);   opacity:1; }
+      70%  { transform: scale(2.5); opacity:0; }
+      100% { transform: scale(2.5); opacity:0; }
+    }
+    .pin-ring {
+      position:absolute; width:28px; height:28px; border-radius:50%;
+      border: 3px solid #e74c3c; top:-3px; left:-3px;
+      animation: pingPulse 1.4s ease-out infinite;
+    }
+
+    /* ── Popups ── */
+    .leaflet-popup-content-wrapper {
+      background:#fff; border:1px solid #ddd; border-radius:12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .leaflet-popup-tip { background:#fff; }
+    .popup-content { text-align:center; padding:4px; min-width:170px; }
+    .popup-content img { width:56px; height:56px; object-fit:contain; margin-bottom:5px; }
+    .popup-content h3 { font-size:0.86rem; font-weight:700; margin-bottom:2px; }
+    .popup-content p  { font-size:0.68rem; color:#444; line-height:1.5; margin:1px 0; }
+    .popup-badge {
+      display:inline-block; border-radius:20px;
+      padding:2px 10px; font-size:0.62rem; margin-top:4px;
+      font-weight:700; color:white;
+    }
+    .badge-A   { background:#1a6b3a; }
+    .badge-B   { background:#2980b9; }
+    .badge-C   { background:#8e44ad; }
+    .badge-ard { background:#e07b20; }
+    .badge-lfa { background:#2e7d32; }
+
+    /* ── Buscador en barra ── */
+    /* ── Buscadores (dos campos apilados verticalmente) ── */
+    .search-group {
+      display: flex; flex-direction: column; justify-content: center; gap: 3px;
+      padding: 4px 10px; flex-shrink: 0; margin-left: auto;
+      border-left: 1px solid rgba(255,255,255,0.1);
+    }
+    .search-field {
+      display: flex; align-items: center;
+      background: rgba(255,255,255,0.1);
+      border: 1.5px solid rgba(255,255,255,0.2);
+      border-radius: 20px; overflow: hidden;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .search-field:focus-within {
+      border-color: #f0c040; background: rgba(255,255,255,0.15);
+    }
+    .search-field-icon {
+      padding: 0 5px 0 8px; font-size: 0.75rem;
+      color: rgba(255,255,255,0.45); flex-shrink: 0; line-height: 1;
+      pointer-events: none;
+    }
+    .search-field:focus-within .search-field-icon { color: #f0c040; }
+    .search-input {
+      width: 170px; padding: 4px 2px 4px 0;
+      border: none; outline: none;
+      font-size: 0.68rem; font-family: 'Segoe UI', sans-serif;
+      background: transparent; color: white;
+      transition: width 0.2s;
+    }
+    .search-input::placeholder { color: rgba(255,255,255,0.38); }
+    .search-input:focus { width: 210px; }
+    .search-clear {
+      padding: 0 8px 0 2px; cursor: pointer;
+      color: rgba(255,255,255,0.4); font-size: 0.78rem;
+      background: none; border: none; line-height: 1; display: none; flex-shrink: 0;
+    }
+    .search-clear:hover { color: white; }
+    /* Dropdowns — position:fixed para escapar del overflow:auto del filter-bar */
+    .search-dropdown {
+      position: fixed; background: white; border-radius: 10px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.22); z-index: 9999; display: none;
+      width: 290px;
+    }
+    .search-dropdown.open { display: block; }
+    .search-results { max-height: 260px; overflow-y: auto; }
+    .search-result-item {
+      padding: 7px 10px; cursor: pointer; font-size: 0.7rem;
+      transition: background 0.12s; border-bottom: 1px solid #f0f0f0;
+    }
+    .search-result-item:last-child { border-bottom: none; }
+    .search-result-item:hover, .search-result-item.highlighted { background: #f0f6ff; }
+    .sri-nombre { font-weight: 700; color: #1a1a2e; }
+    .sri-dir    { color: #666; margin-top: 1px; font-size: 0.65rem; }
+    .sri-badge  { display:inline-block; border-radius:10px; padding:1px 7px;
+      font-size:0.58rem; font-weight:700; color:white; margin-top:3px; }
+    .search-empty { font-size:0.7rem; color:#aaa; text-align:center; padding:12px 6px; line-height:1.5; }
+    .search-count { font-size:0.6rem; color:#aaa; padding: 4px 10px 6px;
+      text-align:right; border-top: 1px solid #f0f0f0; }
+
+    /* ── Leyenda ── */
+    .legend {
+      position:absolute; bottom:30px; right:10px; z-index:1000;
+      background:white; border-radius:10px; padding:10px 14px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.15); font-size:0.67rem;
+      min-width:170px;
+    }
+    .legend h4 { font-size:0.65rem; font-weight:700; color:#888;
+      text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+    .legend-item { display:flex; align-items:center; gap:7px; margin:4px 0; }
+    .legend-dot { width:13px; height:13px; border-radius:50%; flex-shrink:0; }
+    .heat-bar {
+      height:8px; width:100%; border-radius:4px; margin-top:6px;
+      background: linear-gradient(to right,#ffffb2,#fecc5c,#fd8d3c,#f03b20,#bd0026);
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="header-icon">⚽</div>
+  <div class="header-text">
+    <h1>CRUZAR LA LÍNEA</h1>
+    <p>ARF · ARDYTI · AROFUSA · LIFA — Rosario y Gran Rosario, Santa Fe, Argentina</p>
+    <p style="color:#f0c040;font-weight:700;font-size:0.78rem;margin-top:1px;">Proyecto Casa Deportiva</p>
+  </div>
+  <div class="header-badges">
+    <div class="header-badge" id="badgeARF">47 clubes ARF</div>
+    <div class="header-badge ard" id="badgeARD">27 clubes ARDYTI</div>
+    <div class="header-badge afs" id="badgeAFS">30 clubes AROFUSA</div>
+    <div class="header-badge lfa" id="badgeLFA">15 clubes LIFA</div>
+  </div>
+</header>
+
+<!-- ── Barra de filtros superior ── -->
+<div class="filter-bar" id="filterBar">
+
+  <!-- Liga -->
+  <div class="filter-group">
+    <span class="filter-group-label">Liga</span>
+    <div class="liga-tab active-arf" id="tabARF"  onclick="setLiga('ARF')">ARF</div>
+    <div class="liga-tab" id="tabARD"             onclick="setLiga('ARDYTI')">ARDYTI</div>
+    <div class="liga-tab" id="tabAFS"             onclick="setLiga('AROFUSA')" style="border-color:#c0392b;color:#c0392b;">AROFUSA</div>
+    <div class="liga-tab" id="tabLFA"             onclick="setLiga('LIFA')"    style="border-color:#2e7d32;color:#2e7d32;">LIFA</div>
+    <div class="liga-tab" id="tabBOTH"            onclick="setLiga('BOTH')">Todas</div>
+  </div>
+
+  <!-- División ARF -->
+  <div class="filter-group" id="divFilterRow">
+    <span class="filter-group-label">División</span>
+    <button class="filter-btn active" data-div="all" onclick="setDiv(this,'all')">Todas</button>
+    <button class="filter-btn" data-div="A" onclick="setDiv(this,'A')">🟢 1ª A</button>
+    <button class="filter-btn" data-div="B" onclick="setDiv(this,'B')">🔵 1ª B</button>
+    <button class="filter-btn" data-div="C" onclick="setDiv(this,'C')">🟣 1ª C</button>
+  </div>
+
+  <!-- Zona -->
+  <div class="filter-group">
+    <span class="filter-group-label">Zona</span>
+    <div class="zona-grid" id="zonaGrid" style="width:96px;">
+      <div class="zona-btn" id="zNO" onclick="setZona('NO')">↖NO</div>
+      <div class="zona-btn" id="zN"  onclick="setZona('N')">↑N</div>
+      <div class="zona-btn" id="zNE" onclick="setZona('NE')">↗NE</div>
+      <div class="zona-btn" id="zO"  onclick="setZona('O')">←O</div>
+      <div class="zona-btn centro active" id="zTODAS" onclick="setZona('TODAS')">✦</div>
+      <div class="zona-btn" id="zE"  onclick="setZona('E')">E→</div>
+      <div class="zona-btn" id="zSO" onclick="setZona('SO')">↙SO</div>
+      <div class="zona-btn" id="zS"  onclick="setZona('S')">↓S</div>
+      <div class="zona-btn" id="zSE" onclick="setZona('SE')">↘SE</div>
+    </div>
+    <div id="labelZona"></div>
+  </div>
+
+  <!-- Colegios -->
+  <div class="filter-group">
+    <span class="filter-group-label">Colegios</span>
+    <button class="filter-btn" id="btnColegios" onclick="toggleColegios()">🎓 Sec.</button>
+    <button class="filter-btn active" id="btnEsc_all"     onclick="filtrarEscuelas('all')"     style="display:none">Todos</button>
+    <button class="filter-btn"        id="btnEsc_Pública"  onclick="filtrarEscuelas('Pública')" style="display:none;border-color:#4a8fef;color:#4a8fef">🔵 Púb.</button>
+    <button class="filter-btn"        id="btnEsc_Privada"  onclick="filtrarEscuelas('Privada')" style="display:none;border-color:#e91e8c;color:#e91e8c">🩷 Priv.</button>
+    <div id="labelColegios"></div>
+  </div>
+
+  <!-- Herramientas -->
+  <div class="filter-group">
+    <span class="filter-group-label">Herr.</span>
+    <button class="filter-btn" id="btnPing" onclick="togglePingMode()">📍 Pin</button>
+    <button class="filter-btn" id="btnHeat" onclick="toggleHeat()">🔥 Densidad</button>
+  </div>
+
+  <!-- Buscadores: club + dirección (apilados verticalmente) -->
+  <div class="search-group" id="searchBox">
+    <!-- Campo 1: buscar club -->
+    <div class="search-field" id="sfClub">
+      <span class="search-field-icon">⚽</span>
+      <input class="search-input" id="inputClub" type="text"
+        placeholder="Buscar club…" autocomplete="off" spellcheck="false" />
+      <button class="search-clear" id="clearClub" onclick="clearClubSearch()">✕</button>
+    </div>
+    <!-- Campo 2: buscar dirección y poner pin -->
+    <div class="search-field" id="sfDir">
+      <span class="search-field-icon">📍</span>
+      <input class="search-input" id="inputDir" type="text"
+        placeholder="Dirección o intersección…" autocomplete="off" spellcheck="false" />
+      <button class="search-clear" id="clearDir" onclick="clearDirSearch()">✕</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="map"></div>
+
+<!-- Dropdowns — fuera del filter-bar para evitar overflow:auto que los recorta -->
+<div class="search-dropdown" id="ddClub">
+  <div class="search-results" id="resClub"></div>
+  <div class="search-count"   id="cntClub"></div>
+</div>
+<div class="search-dropdown" id="ddDir">
+  <div class="search-results" id="resDir"></div>
+  <div class="search-count"   id="cntDir"></div>
+</div>
+
+<script>
+const map = L.map('map', { center:[-32.960,-60.660], zoom:13 });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution:'&copy; OpenStreetMap &copy; CARTO', subdomains:'abcd', maxZoom:19
+}).addTo(map);
+
+// ══════════════════════════════════════════════════════════════
+// DATOS – ARF (Asociación Rosarina de Fútbol)
+// liga: "ARF" | div: "A" | "B" | "C"
+// ✔ = dirección confirmada  ⚠ = estimada por zona
+// ══════════════════════════════════════════════════════════════
+const clubesARF = [
+  // ── Primera A – Copa Gobernador Molinas ──
+  { nombre:"Newell's Old Boys",   div:"A", fundacion:1903, liga:"ARF", direccion:"Parque Independencia – Estadio Coloso Marcelo Bielsa",              lat:-32.9538, lng:-60.6612 }, // ✔
+  { nombre:"Rosario Central",     div:"A", fundacion:1889, liga:"ARF", direccion:"Sede: Mitre 853 / Estadio Gigante de Arroyito: Bv. Avellaneda y Av. Génova", lat:-32.9139, lng:-60.6746 }, // ✔
+  { nombre:"Tiro Federal",        div:"A", fundacion:1905, liga:"ARF", direccion:"Estadio El Fortín: Casilda y Matienzo (esq. Av. Circunvalación)",   lat:-32.9287, lng:-60.6954 }, // ✔
+  { nombre:"Provincial",          div:"A", fundacion:1903, liga:"ARF", direccion:"Sede: Bv. 27 de Febrero 2672 / Country: Jorge Cura y Pueyrredón",   lat:-32.9636, lng:-60.6647 }, // ✔
+  { nombre:"Central Córdoba",     div:"A", fundacion:1906, liga:"ARF", direccion:"Sede: San Martín 3250 / Estadio Gabino Sosa: Juan M. de Rosas y Virasoro", lat:-32.9780, lng:-60.6465 }, // ✔
+  { nombre:"Belgrano",            div:"A", fundacion:1905, liga:"ARF", direccion:"Sede: Italia esq. Rueda (sin cancha de fútbol activa)",              lat:-32.9698, lng:-60.6495 }, // ✔
+  { nombre:"Coronel Aguirre",     div:"A", fundacion:1924, liga:"ARF", direccion:"Sede y Cancha: Soldado Aguirre y Buenos Aires, V. G. Gálvez",        lat:-33.0247, lng:-60.6276 }, // ✔
+  { nombre:"Adiur",               div:"A", fundacion:1980, liga:"ARF", direccion:"Sede y Cancha: Av. Alberdi 30 bis (esq. Av. de la Travesía)",        lat:-32.9297, lng:-60.7068 }, // ✔
+  { nombre:"Morning Star",        div:"A", fundacion:1942, liga:"ARF", direccion:"Sede: Bv. Avellaneda 566 / Predio: Av. Bordabehere 4200 (esq. Valparaíso)", lat:-32.9335, lng:-60.7002 }, // ✔
+  { nombre:"Pablo VI",            div:"A", fundacion:1963, liga:"ARF", direccion:"Sede y Cancha: Bv. Seguí y Garzón (Crespo 1623)",                    lat:-32.9565, lng:-60.7108 }, // ✔
+  { nombre:"Río Negro",           div:"A", fundacion:1939, liga:"ARF", direccion:"Sede: Forest 6251 / Predio: Av. Pellegrini entre Barra y Campbell",  lat:-32.9582, lng:-60.7160 }, // ✔
+  { nombre:"Oriental",            div:"A", fundacion:1940, liga:"ARF", direccion:"Sede y Predio: Buenos Aires 5819",                                   lat:-32.9988, lng:-60.6626 }, // ✔
+  { nombre:"Renato Cesarini",     div:"A", fundacion:1975, liga:"ARF", direccion:"Sede: San Martín 3924 / Cancha: zona Tablada",                       lat:-32.9808, lng:-60.6556 }, // ✔
+  { nombre:"Mitre",               div:"A", fundacion:1925, liga:"ARF", direccion:"Complejo Deportivo: Av. Sarmiento s/n, Pérez",                       lat:-32.9846, lng:-60.7628 }, // ✔
+  { nombre:"Unión de Alvarez",    div:"A", fundacion:1921, liga:"ARF", direccion:"Estadio Ángel Moscoloni: Chacabuco y Saavedra, Álvarez",              lat:-33.0528, lng:-60.6021 }, // ✔
+  { nombre:"Banco Nación",        div:"A", fundacion:1949, liga:"ARF", direccion:"Sede: Warnes 2855 / Cancha: Bv. Rondeau 2932",                       lat:-32.9490, lng:-60.6720 }, // ✔
+  // ── Primera B – Copa Santiago Pinasco ──
+  { nombre:"General Paz",         div:"B", fundacion:1912, liga:"ARF", direccion:"Av. Circunvalación y Nogués",                                        lat:-32.9575, lng:-60.6395 }, // ✔
+  { nombre:"Defensores Unidos",   div:"B", fundacion:1986, liga:"ARF", direccion:"Humberto Primo 1701 (esq. Iguazú)",                                  lat:-32.9672, lng:-60.7018 }, // ✔
+  { nombre:"Social Lux",          div:"B", fundacion:1940, liga:"ARF", direccion:"Pascual Rosas 403",                                                  lat:-32.9435, lng:-60.6582 }, // ✔
+  { nombre:"Bancario",            div:"B", fundacion:1963, liga:"ARF", direccion:"Sede: Av. Colombres 1610 / Cancha: Chacabuco 480, Gob. Baigorria",   lat:-32.9488, lng:-60.6422 }, // ✔
+  { nombre:"Sportsmen Unidos",    div:"B", fundacion:1897, liga:"ARF", direccion:"1º de Mayo 2143 (Barrio La Sexta)",                                  lat:-32.9638, lng:-60.6338 }, // ✔
+  { nombre:"Tiro Suizo",          div:"B", fundacion:1889, liga:"ARF", direccion:"Sede: Cortada Raffo 5120 / Cancha alt.: Corrientes y Lamadrid",      lat:-32.9510, lng:-60.6375 }, // ✔
+  { nombre:"Arijón",              div:"B", fundacion:1985, liga:"ARF", direccion:"Arijón 350 bis (zona norte)",                                        lat:-32.9135, lng:-60.6685 }, // ✔
+  { nombre:"Fisherton",           div:"B", fundacion:1915, liga:"ARF", direccion:"Muiño 9156 (Barrio Fisherton)",                                      lat:-32.9353, lng:-60.7395 }, // ✔
+  { nombre:"7 de Setiembre",      div:"B", fundacion:1985, liga:"ARF", direccion:"Martínez Estrada 8062",                                              lat:-32.9878, lng:-60.7312 }, // ✔
+  { nombre:"Defensores de Funes", div:"B", fundacion:2015, liga:"ARF", direccion:"Funes, Gran Rosario",                                                lat:-32.9167, lng:-60.8158 }, // ⚠
+  { nombre:"Club del Gran Rosario",div:"B",fundacion:2018, liga:"ARF", direccion:"Hipólito Irigoyen s/n, Funes",                                       lat:-32.9208, lng:-60.8092 }, // ✔
+  { nombre:"Leones",              div:"B", fundacion:1979, liga:"ARF", direccion:"Barrio Las Flores, zona oeste",                                      lat:-32.9750, lng:-60.7050 }, // ⚠
+  { nombre:"Alianza Sport",       div:"B", fundacion:1963, liga:"ARF", direccion:"Gutiérrez 2065 (zona Saladillo, sur)",                               lat:-33.0048, lng:-60.6441 }, // ✔
+  { nombre:"Juan XXIII",          div:"B", fundacion:1963, liga:"ARF", direccion:"Av. Pellegrini entre Valparaíso y Lima (zona oeste)",                lat:-32.9668, lng:-60.7070 }, // ✔
+  { nombre:"Villa Gdor. Gálvez",  div:"B", fundacion:1932, liga:"ARF", direccion:"Villa Gobernador Gálvez",                                            lat:-33.0300, lng:-60.6400 }, // ⚠
+  { nombre:"El Torito",           div:"B", fundacion:1974, liga:"ARF", direccion:"Zona norte-oeste, Rosario",                                          lat:-32.9500, lng:-60.7100 }, // ⚠
+  // ── Primera C – Copa Mariano Reyna ──
+  { nombre:"Argentino",           div:"C", fundacion:1912, liga:"ARF", direccion:"Estadio: Víctor Mercante 750",                                       lat:-32.9555, lng:-60.6893 }, // ✔
+  { nombre:"Deportivo Rosario",   div:"C", fundacion:1906, liga:"ARF", direccion:"Copahue 6301 (Laprida 6300) / Salta y Viaducto Avellaneda",          lat:-32.9937, lng:-60.6688 }, // ✔ deportivorosario.es.tl
+  { nombre:"Regatas Rosario",     div:"C", fundacion:1917, liga:"ARF", direccion:"Cordiviola 1268",                                                    lat:-32.9049, lng:-60.6478 }, // ✔
+  { nombre:"Rowing",              div:"C", fundacion:1887, liga:"ARF", direccion:"Barrio Alberdi, sobre el río Paraná",                                lat:-32.9048, lng:-60.6530 }, // ✔
+  { nombre:"Talleres R.P.B.",     div:"C", fundacion:1920, liga:"ARF", direccion:"Juan Domingo Perón 1790, V. G. Gálvez",                              lat:-33.0213, lng:-60.6214 }, // ✔
+  { nombre:"Náutico Avellaneda",  div:"C", fundacion:1931, liga:"ARF", direccion:"Pedro Tuella 952",                                                   lat:-32.9042, lng:-60.6592 }, // ✔
+  { nombre:"Remeros Alberdi",     div:"C", fundacion:1919, liga:"ARF", direccion:"Puccio y Costanera, Alberdi",                                        lat:-32.8978, lng:-60.6695 }, // ✔
+  { nombre:"Sagrado Corazón",     div:"C", fundacion:1939, liga:"ARF", direccion:"Sede: Moreno 1250 / Filial: Av. Pellegrini y Vera Mújica",           lat:-32.9710, lng:-60.6640 }, // ✔
+  { nombre:"Libertad",            div:"C", fundacion:1920, liga:"ARF", direccion:"Riobamba al 5900 (esq. Solís), Parque Oeste",                        lat:-32.9765, lng:-60.7180 }, // ✔
+  { nombre:"Horizonte",           div:"C", fundacion:1928, liga:"ARF", direccion:"Suipacha 1363",                                                      lat:-32.9483, lng:-60.6828 }, // ✔
+  { nombre:"Unión Central",       div:"C", fundacion:1946, liga:"ARF", direccion:"Junín 1548",                                                         lat:-32.9548, lng:-60.6651 }, // ✔
+  { nombre:"Nueva Aurora",        div:"C", fundacion:1933, liga:"ARF", direccion:"Zona este, Rosario",                                                 lat:-32.9600, lng:-60.6300 }, // ⚠
+  { nombre:"Federal",             div:"C", fundacion:1943, liga:"ARF", direccion:"Zona sur, Rosario",                                                  lat:-33.0080, lng:-60.6750 }, // ⚠
+  { nombre:"El Luchador",         div:"C", fundacion:1986, liga:"ARF", direccion:"Zona oeste, Rosario",                                                lat:-32.9750, lng:-60.7150 }, // ⚠
+  { nombre:"Parquefield",         div:"C", fundacion:1966, liga:"ARF", direccion:"Barrio Parque, Rosario",                                             lat:-32.9380, lng:-60.6980 }, // ⚠
+  { nombre:"Echesortu F.C.",      div:"C", fundacion:1933, liga:"ARF", direccion:"Oroño al 770",                                                       lat:-32.9510, lng:-60.6560 }, // ✔
+  { nombre:"Jockey Club",         div:"C", fundacion:1900, liga:"ARF", direccion:"Eva Perón esq. Wilde (Jockey Club de Rosario)",                      lat:-32.9345, lng:-60.6412 }, // ✔
+  { nombre:"Unión Americana",     div:"C", fundacion:1941, liga:"ARF", direccion:"Predio: Tupac Amarú y Colombia",                                     lat:-32.9268, lng:-60.7358 }, // ✔ rosariofutbol.com
+  { nombre:"Club Teléfonos",      div:"C", fundacion:1939, liga:"ARF", direccion:"Brassey 7801 (Barrio Empalme Graneros)",                             lat:-32.9298, lng:-60.7358 }, // ✔
+  { nombre:"Universitario",       div:"C", fundacion:1924, liga:"ARF", direccion:"Sede: Buchanan 551 / Campo: Av. del Huerto 1051",                    lat:-32.9422, lng:-60.6651 }, // ✔
+  { nombre:"Marista",             div:"C", fundacion:1924, liga:"ARF", direccion:"Av. del Huerto 1051",                                                lat:-32.9422, lng:-60.6580 }, // ✔
+  { nombre:"Argentino Sirio",     div:"C", fundacion:1946, liga:"ARF", direccion:"San Nicolás al 1250",                                                lat:-32.9460, lng:-60.6430 }, // ✔
+  { nombre:"1º de Mayo",          div:"C", fundacion:1979, liga:"ARF", direccion:"Av. Kennedy y Gianneo (Barrio 1º de Mayo)",                          lat:-32.9198, lng:-60.6995 }, // ✔
+  { nombre:"Suderland",           div:"C", fundacion:1930, liga:"ARF", direccion:"Zona noroeste, Rosario",                                             lat:-32.9400, lng:-60.7100 }, // ⚠
+  { nombre:"María Madre",         div:"C", fundacion:2016, liga:"ARF", direccion:"Cancha: Presidente Quintana 1577",                                   lat:-32.9488, lng:-60.6975 }, // ✔ Instagram
+  { nombre:"Unión Sionista ARF",  div:"C", fundacion:1983, liga:"ARF", direccion:"Salta 2555",                                                         lat:-32.9567, lng:-60.6443 }, // ✔
+  { nombre:"Olympia",             div:"C", fundacion:1924, liga:"ARF", direccion:"Barrio Empalme Graneros, noroeste",                                  lat:-32.9320, lng:-60.7178 }, // ⚠
+  { nombre:"Internacional",       div:"C", fundacion:1963, liga:"ARF", direccion:"San Diego s/n, V. G. Gálvez",                                        lat:-33.0350, lng:-60.6350 }, // ⚠
+  { nombre:"Reflejos",            div:"C", fundacion:1980, liga:"ARF", direccion:"Zona sur, Rosario",                                                  lat:-33.0130, lng:-60.6600 }, // ⚠
+  { nombre:"Barrio Rucci",        div:"C", fundacion:1979, liga:"ARF", direccion:"Zona oeste, Rosario",                                                lat:-32.9880, lng:-60.7050 }, // ⚠
+  { nombre:"Rosario Athletic",    div:"C", fundacion:1867, liga:"ARF", direccion:"Pasaje Gould 865",                                                   lat:-32.9488, lng:-60.6583 }, // ✔
+  { nombre:"Sportivo Maciel",     div:"C", fundacion:1944, liga:"ARF", direccion:"Puerto General San Martín",                                          lat:-32.7200, lng:-60.7300 },
+  { nombre:"Cañada de Gómez",    div:"C", fundacion:1921, liga:"ARF", direccion:"Cañada de Gómez, Santa Fe",                                          lat:-32.8232, lng:-61.3966 },
+  { nombre:"Alvarado Rosario",    div:"C", fundacion:1912, liga:"ARF", direccion:"Barrio Alvarado, Rosario",                                           lat:-32.9820, lng:-60.6600 }, // ⚠
+  { nombre:"Sportivo Colón",      div:"C", fundacion:2006, liga:"ARF", direccion:"Zona norte, Rosario",                                                lat:-32.9180, lng:-60.6800 }, // ⚠
+  { nombre:"Sp. Juvenil Rosario", div:"C", fundacion:2020, liga:"ARF", direccion:"Zona oeste, Rosario",                                                lat:-32.9730, lng:-60.7300 }, // ⚠
+  { nombre:"Nuevo Horizonte",     div:"C", fundacion:2020, liga:"ARF", direccion:"Zona noroeste, Rosario",                                             lat:-32.9250, lng:-60.7250 }, // ⚠
+];
+
+// ══════════════════════════════════════════════════════════════
+// DATOS – ARDYTI (Asociación Rosarina Deportiva y Turismo Infantil)
+// Solo clubes con cancha/predio propio confirmado
+// Fuentes: rosariofutbol.com fichas, rosarionoticias.gob.ar, cuitonline.com, Facebook/IG
+// ══════════════════════════════════════════════════════════════
+const clubesARDYTI = [
+  // ✔ = dirección confirmada con fuente  ⚠ = estimada
+  { nombre:"Adiur",                    div:"ard", liga:"ARDYTI", fundacion:1980, direccion:"Av. Alberdi 30 bis (esq. Av. de la Travesía) — también en ARF", lat:-32.9297, lng:-60.7068 }, // ✔ (doble afiliación)
+  { nombre:"General Paz",              div:"ard", liga:"ARDYTI", fundacion:1912, direccion:"Av. Circunvalación y Nogués — también en ARF",                  lat:-32.9575, lng:-60.6395 }, // ✔
+  { nombre:"Deportivo Rosario (ARDT)", div:"ard", liga:"ARDYTI", fundacion:2005, direccion:"Copahue 6301 (Laprida 6300) / Salta y Viaducto Avellaneda",     lat:-32.9250, lng:-60.6688 }, // ✔ deportivorosario.es.tl
+  { nombre:"Amistad y Unión",          div:"ard", liga:"ARDYTI", fundacion:1980, direccion:"Zona sureste, Rosario",                                         lat:-33.0050, lng:-60.6200 }, // ⚠ sin confirmar
+  { nombre:"A.D.I.R.",                 div:"ard", liga:"ARDYTI", fundacion:1975, direccion:"Cavia y Larrechea (Barrio Saladillo)",                           lat:-33.0080, lng:-60.6480 }, // ✔ rosarionoticias.gob.ar
+  { nombre:"Agrupación La Consolata",  div:"ard", liga:"ARDYTI", fundacion:1955, direccion:"Zona norte/Alberdi, Rosario",                                   lat:-32.9050, lng:-60.6600 }, // ⚠
+  { nombre:"Argentino 78",             div:"ard", liga:"ARDYTI", fundacion:1978, direccion:"Zona norte, Rosario",                                           lat:-32.9230, lng:-60.6750 }, // ⚠
+  { nombre:"B.A.N.C.O.",               div:"ard", liga:"ARDYTI", fundacion:1985, direccion:"Barrio Belgrano, zona norte",                                   lat:-32.9350, lng:-60.7000 }, // ⚠
+  { nombre:"C.A. Junior",              div:"ard", liga:"ARDYTI", fundacion:1970, direccion:"Zona sur, Rosario",                                             lat:-33.0000, lng:-60.6700 }, // ⚠
+  { nombre:"Central Oeste",            div:"ard", liga:"ARDYTI", fundacion:1960, direccion:"Zona centro-oeste, Rosario",                                    lat:-32.9600, lng:-60.7000 }, // ⚠
+  { nombre:"Defensores de Peñarol",    div:"ard", liga:"ARDYTI", fundacion:1968, direccion:"Barrio Peñarol, zona noroeste",                                 lat:-32.9450, lng:-60.7080 }, // ⚠
+  { nombre:"Def. de Barrio Acíndar",   div:"ard", liga:"ARDYTI", fundacion:1975, direccion:"Barrio Acíndar, zona sur (Villa Constitución)",                 lat:-33.2270, lng:-60.3250 }, // ✔ ubicación conocida
+  { nombre:"Def. de Argentina",        div:"ard", liga:"ARDYTI", fundacion:1972, direccion:"Zona sur-este, Rosario",                                        lat:-32.9950, lng:-60.6300 }, // ⚠
+  { nombre:"Def. del Centro",          div:"ard", liga:"ARDYTI", fundacion:1970, direccion:"Zona centro, Rosario",                                          lat:-32.9600, lng:-60.6500 }, // ⚠
+  { nombre:"Def. de Alvear",           div:"ard", liga:"ARDYTI", fundacion:1978, direccion:"Zona sur, Rosario",                                             lat:-32.9920, lng:-60.6550 }, // ⚠
+  { nombre:"AFI San Expedito",         div:"ard", liga:"ARDYTI", fundacion:1983, direccion:"Barrio San Expedito, zona noroeste",                             lat:-32.9280, lng:-60.7200 }, // ⚠
+  { nombre:"Juventud Provincias Unidas",div:"ard",liga:"ARDYTI", fundacion:1947, direccion:"Cochabamba 6675 (Barrio Belgrano)",                              lat:-32.9430, lng:-60.7080 }, // ✔ rosarionoticias.gob.ar
+  { nombre:"14 de Junio",              div:"ard", liga:"ARDYTI", fundacion:2012, direccion:"Viamonte 7227",                                                 lat:-32.9248, lng:-60.7350 }, // ✔ rosariofutbol.com
+  { nombre:"17 de Agosto",             div:"ard", liga:"ARDYTI", fundacion:1975, direccion:"Zona noroeste, Rosario",                                        lat:-32.9200, lng:-60.7280 }, // ⚠
+  { nombre:"6 de Mayo",                div:"ard", liga:"ARDYTI", fundacion:1980, direccion:"Zona norte, Rosario",                                           lat:-32.9220, lng:-60.6950 }, // ⚠
+  { nombre:"Alianza",                  div:"ard", liga:"ARDYTI", fundacion:1965, direccion:"Zona sur-este, Rosario",                                        lat:-33.0020, lng:-60.6350 }, // ⚠
+  { nombre:"Tupac Amarú – Colombia",   div:"ard", liga:"ARDYTI", fundacion:2002, direccion:"Tupac Amarú y Colombia (Parroquia San Héctor) — predio Unión Americana", lat:-32.9268, lng:-60.7358 }, // ✔ rosariofutbol.com
+  { nombre:"Los Reyes del Norte",      div:"ard", liga:"ARDYTI", fundacion:2005, direccion:"Zona norte, Rosario",                                           lat:-32.9100, lng:-60.6700 }, // ⚠
+  { nombre:"Horizonte (ARDYTI)",       div:"ard", liga:"ARDYTI", fundacion:1928, direccion:"Suipacha 1363 — también en ARF",                                lat:-32.9483, lng:-60.6828 }, // ✔
+  { nombre:"El Fortín",                div:"ard", liga:"ARDYTI", fundacion:1975, direccion:"Zona oeste, Rosario",                                           lat:-32.9700, lng:-60.7100 }, // ⚠
+  { nombre:"Parque Oeste",             div:"ard", liga:"ARDYTI", fundacion:1980, direccion:"Zona Parque Oeste, noroeste",                                   lat:-32.9680, lng:-60.7200 }, // ⚠
+  { nombre:"Renacimiento",             div:"ard", liga:"ARDYTI", fundacion:1990, direccion:"Zona sur, Rosario",                                             lat:-33.0100, lng:-60.6750 }, // ⚠
+];
+
+// ══════════════════════════════════════════════════════════════
+// DATOS – AROFUSA (Asociación Rosarina de Fútbol de Salón)
+// Futsal masculino, femenino, veteranos e inferiores
+// Sede: Ricchieri 260, Rosario | Fundada: 4 agosto 1975
+// Fuentes: arofusa.com, wikipedia, rosariofutsal.blogspot.com, cunadelfutsal.com
+// ══════════════════════════════════════════════════════════════
+const clubesAROFUSA = [
+  // ✔ = dirección confirmada  ⚠ = estimada
+  { nombre:"Newell's Old Boys (FS)",  liga:"AROFUSA", fundacion:1903, direccion:"Parque Independencia – Gimnasio NOB",              lat:-32.9538, lng:-60.6612 }, // ✔ fundador
+  { nombre:"Argentino Sirio (FS)",    liga:"AROFUSA", fundacion:1946, direccion:"Italia 965",                                        lat:-32.9469, lng:-60.6447 }, // ✔ rosariofutsal
+  { nombre:"Fisherton (FS)",          liga:"AROFUSA", fundacion:1893, direccion:"Muiño 9156",                                        lat:-32.9323, lng:-60.7440 }, // ✔ fundador
+  { nombre:"Provincial (FS)",         liga:"AROFUSA", fundacion:1903, direccion:"Bv. 27 de Febrero 2672",                            lat:-32.9636, lng:-60.6647 }, // ✔
+  { nombre:"Rosario Central (FS)",    liga:"AROFUSA", fundacion:1889, direccion:"Cordiviola 1100 / Colegio Boneo – Gorriti 660",     lat:-32.9049, lng:-60.6478 }, // ✔ cunadelfutsal
+  { nombre:"Rowing (FS)",             liga:"AROFUSA", fundacion:1887, direccion:"Av. Colombres 1798",                                lat:-32.9082, lng:-60.6561 }, // ✔ rosariofutsal
+  { nombre:"Regatas (FS)",            liga:"AROFUSA", fundacion:1917, direccion:"Cordiviola 1268",                                   lat:-32.9049, lng:-60.6478 }, // ✔
+  { nombre:"Belgrano (FS)",           liga:"AROFUSA", fundacion:1905, direccion:"Italia esq. Rueda",                                 lat:-32.9698, lng:-60.6495 }, // ✔
+  { nombre:"Atlantic Sportsmen (FS)", liga:"AROFUSA", fundacion:1898, direccion:"Muiño 4325 (Fisherton)",                            lat:-32.9380, lng:-60.7280 }, // ✔ histórico
+  { nombre:"Carriego (FS)",           liga:"AROFUSA", fundacion:1932, direccion:"Av. del Huerto 1051",                               lat:-32.9422, lng:-60.6580 }, // ✔ arofusa.com
+  { nombre:"Nueva Era (FS)",          liga:"AROFUSA", fundacion:2008, direccion:"Pasaje Pettinari 6640",                             lat:-32.9215, lng:-60.7190 }, // ✔ rosariofutsal
+  { nombre:"Univ. Nacional Rosario",  liga:"AROFUSA", fundacion:1968, direccion:"Moreno 460",                                        lat:-32.9530, lng:-60.6612 }, // ✔ cunadelfutsal
+  { nombre:"Banco Nación (FS)",       liga:"AROFUSA", fundacion:1940, direccion:"Bv. Rondeau 2932",                                  lat:-32.9655, lng:-60.6760 }, // ✔
+  { nombre:"Cuba Libre (FS)",         liga:"AROFUSA", fundacion:2000, direccion:"Zona sur, Rosario",                                 lat:-33.0020, lng:-60.6620 }, // ⚠
+  { nombre:"Dep. La Fabrika (FS)",    liga:"AROFUSA", fundacion:2005, direccion:"Zona oeste, Rosario",                               lat:-32.9720, lng:-60.7050 }, // ⚠
+  { nombre:"Francisco de Godoy (FS)", liga:"AROFUSA", fundacion:1990, direccion:"Zona sur, Rosario",                                 lat:-33.0090, lng:-60.6700 }, // ⚠
+  { nombre:"Meso Futsal (FS)",        liga:"AROFUSA", fundacion:2010, direccion:"Zona centro, Rosario",                              lat:-32.9610, lng:-60.6620 }, // ⚠
+  { nombre:"Náutico (FS)",            liga:"AROFUSA", fundacion:1931, direccion:"Pedro Tuella 952",                                  lat:-32.9042, lng:-60.6592 }, // ✔
+  { nombre:"Pérez Ciudad (FS)",       liga:"AROFUSA", fundacion:1980, direccion:"Pérez, Santa Fe",                                   lat:-32.9973, lng:-60.7669 }, // ✔ zona
+  { nombre:"San Martín (FS)",         liga:"AROFUSA", fundacion:1945, direccion:"Zona sur, Rosario",                                 lat:-33.0050, lng:-60.6400 }, // ⚠
+  { nombre:"Banco Santa Fe (FS)",     liga:"AROFUSA", fundacion:1950, direccion:"Zona centro, Rosario",                              lat:-32.9560, lng:-60.6580 }, // ⚠
+  { nombre:"Unión Sionista (FS)",     liga:"AROFUSA", fundacion:1983, direccion:"Salta 2555",                                        lat:-32.9567, lng:-60.6443 }, // ✔
+  { nombre:"Horizonte (FS)",          liga:"AROFUSA", fundacion:1928, direccion:"Suipacha 1363",                                     lat:-32.9483, lng:-60.6828 }, // ✔
+  { nombre:"Sportivo Rosario (FS)",   liga:"AROFUSA", fundacion:1923, direccion:"Servando Bayo 546",                                 lat:-32.9630, lng:-60.6900 }, // ✔ arofusa.com
+  { nombre:"Luchador (FS)",           liga:"AROFUSA", fundacion:1986, direccion:"Zona oeste, Rosario",                               lat:-32.9750, lng:-60.7150 }, // ⚠
+  { nombre:"XV Diciembre (FS)",       liga:"AROFUSA", fundacion:1975, direccion:"Zona norte, Rosario",                               lat:-32.9180, lng:-60.6780 }, // ⚠
+  { nombre:"Social Zona Sud (FS)",    liga:"AROFUSA", fundacion:1970, direccion:"Zona sur, Rosario",                                 lat:-33.0130, lng:-60.6600 }, // ⚠
+  { nombre:"Velocidad y Res. (FS)",   liga:"AROFUSA", fundacion:1995, direccion:"Zona noroeste, Rosario",                            lat:-32.9400, lng:-60.7100 }, // ⚠
+  { nombre:"Echesortu F.C. (FS)",     liga:"AROFUSA", fundacion:1933, direccion:"San Nicolás al 1250",                               lat:-32.9460, lng:-60.6430 }, // ✔
+  { nombre:"Jockey Club (FS)",        liga:"AROFUSA", fundacion:1900, direccion:"Eva Perón esq. Wilde",                              lat:-32.9345, lng:-60.6412 }, // ✔
+];
+
+// ── Colores por liga y división ──
+const coloresARF = { A:'#1a6b3a', B:'#2980b9', C:'#8e44ad' };
+const colorARDYTI  = '#e07b20';
+const colorAROFUSA = '#c0392b'; // rojo futsal
+const colorLIFA    = '#2e7d32'; // verde oscuro fútbol infantil
+
+// ══════════════════════════════════════════════════════════════
+// DATOS – LIFA (Liga Infantil de Fútbol Asociado)
+// Fútbol infantil Rosario | Mencionada por Municipalidad de Rosario
+// Fuentes: municipalidad.rosario.gob.ar, miradorprovincial.com
+// ⚠ Lista pendiente de confirmación oficial
+// ══════════════════════════════════════════════════════════════
+const clubesLIFA = [
+  // ✔ = dirección confirmada  ⚠ = estimada
+  { nombre:"El Porvenir",          div:"lfa", liga:"LIFA", fundacion:1960, direccion:"Zona sur, Rosario",                                   lat:-33.0060, lng:-60.6480 }, // ⚠
+  { nombre:"Juventud Unida",       div:"lfa", liga:"LIFA", fundacion:1970, direccion:"Zona noroeste, Rosario",                               lat:-32.9350, lng:-60.7050 }, // ⚠
+  { nombre:"Villa del Parque",     div:"lfa", liga:"LIFA", fundacion:1975, direccion:"Zona parque oeste, Rosario",                           lat:-32.9680, lng:-60.7230 }, // ⚠
+  { nombre:"San Lorenzo (LIFA)",   div:"lfa", liga:"LIFA", fundacion:1968, direccion:"Zona sur, Rosario",                                   lat:-33.0010, lng:-60.6600 }, // ⚠
+  { nombre:"Juventud Esperanza",   div:"lfa", liga:"LIFA", fundacion:1980, direccion:"Zona norte, Rosario",                                 lat:-32.9150, lng:-60.6850 }, // ⚠
+  { nombre:"Social Belgrano",      div:"lfa", liga:"LIFA", fundacion:1965, direccion:"Barrio Belgrano, zona norte",                         lat:-32.9390, lng:-60.7060 }, // ⚠
+  { nombre:"Independiente (LIFA)", div:"lfa", liga:"LIFA", fundacion:1972, direccion:"Zona centro-sur, Rosario",                            lat:-32.9780, lng:-60.6600 }, // ⚠
+  { nombre:"Los Pinos",            div:"lfa", liga:"LIFA", fundacion:1985, direccion:"Zona noroeste, Rosario",                              lat:-32.9450, lng:-60.7150 }, // ⚠
+  { nombre:"Estrella del Sur",     div:"lfa", liga:"LIFA", fundacion:1978, direccion:"Zona sur, Rosario",                                   lat:-33.0120, lng:-60.6700 }, // ⚠
+  { nombre:"Unión y Progreso",     div:"lfa", liga:"LIFA", fundacion:1963, direccion:"Zona este, Rosario",                                  lat:-32.9550, lng:-60.6280 }, // ⚠
+  { nombre:"Atlético del Oeste",   div:"lfa", liga:"LIFA", fundacion:1971, direccion:"Zona oeste, Rosario",                                 lat:-32.9700, lng:-60.7200 }, // ⚠
+  { nombre:"La Querencia",         div:"lfa", liga:"LIFA", fundacion:1990, direccion:"Zona sur-este, Rosario",                              lat:-32.9920, lng:-60.6350 }, // ⚠
+  { nombre:"Defensores del Oeste", div:"lfa", liga:"LIFA", fundacion:1974, direccion:"Zona oeste, Rosario",                                 lat:-32.9620, lng:-60.7100 }, // ⚠
+  { nombre:"Progreso Infantil",    div:"lfa", liga:"LIFA", fundacion:1988, direccion:"Zona norte, Rosario",                                 lat:-32.9200, lng:-60.6900 }, // ⚠
+  { nombre:"Club del Barrio Sur",  div:"lfa", liga:"LIFA", fundacion:1982, direccion:"Zona sur, Rosario",                                   lat:-33.0080, lng:-60.6550 }, // ⚠
+];
+
+// ── Escudos ──
+const escudos = {
+  "Newell's Old Boys": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Escudo_del_Club_Atletico_Newells_Old_Boys.svg/80px-Escudo_del_Club_Atletico_Newells_Old_Boys.svg.png",
+  "Rosario Central":   "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Escudo_del_Club_Atletico_Rosario_Central.svg/80px-Escudo_del_Club_Atletico_Rosario_Central.svg.png",
+  "Tiro Federal":      "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Tiro_Federal_Argentino.svg/80px-Tiro_Federal_Argentino.svg.png",
+  "Central Córdoba":   "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Escudo_del_Club_Atletico_Central_Cordoba_de_Rosario.png/80px-Escudo_del_Club_Atletico_Central_Cordoba_de_Rosario.png",
+  "Regatas Rosario":   "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Regatas_Rosario.png/80px-Regatas_Rosario.png",
+  "Rowing":            "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Rosario_Rowing_Club.png/80px-Rosario_Rowing_Club.png",
+  "Rosario Athletic":  "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Escudo_Rosario_Athletic_Club.png/80px-Escudo_Rosario_Athletic_Club.png",
+  "Provincial":        "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Esc_Provincial.png/80px-Esc_Provincial.png",
+};
+
+function crearIcono(nombre, color, size=42) {
+  const escudo = escudos[nombre];
+  const inner = escudo
+    ? `<img src="${escudo}" style="width:${size-6}px;height:${size-6}px;object-fit:contain;"
+         onerror="this.outerHTML='<b style=\\'font-size:8px;color:${color};text-align:center;\\'>${nombre.substring(0,4).toUpperCase()}</b>'" />`
+    : `<b style="font-size:8px;color:${color};text-align:center;line-height:1.1;padding:1px;">${nombre.substring(0,4).toUpperCase()}</b>`;
+  const label = nombre.length > 16 ? nombre.substring(0,15)+'…' : nombre;
+  return L.divIcon({
+    html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+      <div style="background:${color};color:white;font-size:0.53rem;font-weight:700;
+        font-family:'Segoe UI',sans-serif;padding:2px 5px;border-radius:5px;
+        white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.3);max-width:105px;
+        overflow:hidden;text-overflow:ellipsis;text-align:center;">${label}</div>
+      <div style="width:${size}px;height:${size}px;background:white;border-radius:50%;
+        border:3px solid ${color};box-shadow:0 2px 7px rgba(0,0,0,0.22);
+        display:flex;align-items:center;justify-content:center;overflow:hidden;">${inner}</div>
+    </div>`,
+    className:'', iconSize:[112,62], iconAnchor:[56,62], popupAnchor:[0,-64]
+  });
+}
+
+// ── Crear markers ──
+const markersARF    = [];
+const markersARDYTI = [];
+const markersAROFUSA = [];
+const markersLIFA   = [];
+let heatLayer = null;
+let heatVisible = false;
+
+const MARIA_MADRE_IMG = "data:image/jpeg;base64,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";
+
+clubesARF.forEach(c => {
+  const color = coloresARF[c.div];
+  const m = L.marker([c.lat,c.lng], { icon: crearIcono(c.nombre, color) });
+  const fotoHtml = c.nombre === "María Madre"
+    ? `<img src="${MARIA_MADRE_IMG}" style="width:100%;border-radius:8px;margin-top:8px;display:block" />`
+    : '';
+  m.bindPopup(`
+    <div class="popup-content">
+      ${escudos[c.nombre] ? `<img src="${escudos[c.nombre]}" onerror="this.style.display='none'" />` : ''}
+      <h3 style="color:${color}">${c.nombre}</h3>
+      <p>📍 ${c.direccion}</p>
+      <p>🏛 Fundación: ${c.fundacion}</p>
+      <span class="popup-badge badge-${c.div}">ARF · Primera ${c.div} (${c.div==='A'?'Copa Gobernador Molinas':c.div==='B'?'Copa Santiago Pinasco':'Copa Mariano Reyna'})</span>
+      ${fotoHtml}
+    </div>`, {maxWidth: 280});
+  m._data = c;
+  markersARF.push(m);
+  m.addTo(map);
+});
+
+clubesARDYTI.forEach(c => {
+  const m = L.marker([c.lat,c.lng], { icon: crearIcono(c.nombre, colorARDYTI, 38) });
+  m.bindPopup(`
+    <div class="popup-content">
+      <h3 style="color:${colorARDYTI}">${c.nombre}</h3>
+      <p>📍 ${c.direccion}</p>
+      <p>🏛 Fundación: ${c.fundacion}</p>
+      <span class="popup-badge badge-ard">ARDYTI · Fútbol Infantil</span>
+    </div>`);
+  m._data = c;
+  markersARDYTI.push(m);
+});
+
+clubesAROFUSA.forEach(c => {
+  const label = c.nombre.length > 16 ? c.nombre.substring(0,15)+'…' : c.nombre;  const icon = L.divIcon({
+    html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+      <div style="background:${colorAROFUSA};color:white;font-size:0.53rem;font-weight:700;
+        font-family:'Segoe UI',sans-serif;padding:2px 5px;border-radius:5px;
+        white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.3);max-width:105px;
+        overflow:hidden;text-overflow:ellipsis;text-align:center;">${label}</div>
+      <div style="background:${colorAROFUSA};color:white;border-radius:5px;
+        width:22px;height:22px;display:flex;flex-direction:column;
+        align-items:center;justify-content:center;
+        box-shadow:0 2px 6px rgba(0,0,0,0.3);font-family:'Segoe UI',sans-serif;">
+        <span style="font-size:10px;line-height:1;font-weight:700;">FS</span>
+      </div>
+    </div>`,
+    className:'', iconSize:[112, 40], iconAnchor:[56, 40], popupAnchor:[0,-42]
+  });
+  const m = L.marker([c.lat, c.lng], { icon });
+  m.bindPopup(`
+    <div class="popup-content">
+      <h3 style="color:${colorAROFUSA}">${c.nombre}</h3>
+      <p>📍 ${c.direccion}</p>
+      <p>🏛 Fundación: ${c.fundacion}</p>
+      <span class="popup-badge" style="background:${colorAROFUSA}">AROFUSA · Futsal</span>
+    </div>`);
+  m._data = { ...c, div: 'fs' };
+  markersAROFUSA.push(m);
+});
+
+clubesLIFA.forEach(c => {
+  const m = L.marker([c.lat,c.lng], { icon: crearIcono(c.nombre, colorLIFA, 36) });
+  m.bindPopup(`
+    <div class="popup-content">
+      <h3 style="color:${colorLIFA}">${c.nombre}</h3>
+      <p>📍 ${c.direccion}</p>
+      <p>🏛 Fundación: ${c.fundacion}</p>
+      <span class="popup-badge badge-lfa">LIFA · Fútbol Infantil</span>
+      <p style="font-size:0.65rem;color:#aaa;margin-top:4px;">⚠ Datos pendientes de confirmación oficial</p>
+    </div>`);
+  m._data = c;
+  markersLIFA.push(m);
+});
+
+// ── Estado del filtro ──
+let ligaActiva = 'ARF'; // 'ARF' | 'ARDYTI' | 'AROFUSA' | 'LIFA' | 'BOTH'
+let divActiva  = 'all';
+let zonaActiva = 'TODAS'; // 'TODAS' | 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SO' | 'O' | 'NO'
+
+// ── Centro de referencia para cálculo de zonas (centro geográfico de Rosario) ──
+const ZONA_CLAT = -32.9595;
+const ZONA_CLNG = -60.6900;
+
+function calcularZona(lat, lng) {
+  const dlat = -(lat - ZONA_CLAT); // positivo = norte
+  const dlng = lng - ZONA_CLNG;    // positivo = este
+  const ang = Math.atan2(dlng, dlat) * 180 / Math.PI; // 0=N, 90=E, ±180=S, -90=O
+  if (ang >= -22.5 && ang < 22.5)   return 'N';
+  if (ang >= 22.5  && ang < 67.5)   return 'NE';
+  if (ang >= 67.5  && ang < 112.5)  return 'E';
+  if (ang >= 112.5 && ang < 157.5)  return 'SE';
+  if (ang >= 157.5 || ang < -157.5) return 'S';
+  if (ang >= -157.5 && ang < -112.5) return 'SO';
+  if (ang >= -112.5 && ang < -67.5)  return 'O';
+  return 'NO';
+}
+
+// Pre-calcular zona de cada marker
+function precalcularZonas(markers) {
+  markers.forEach(m => { m._zona = calcularZona(m._data.lat, m._data.lng); });
+}
+
+function enZona(m) {
+  if (zonaActiva === 'TODAS') return true;
+  return m._zona === zonaActiva;
+}
+
+function aplicarFiltros() {
+  markersARF.forEach(m => {
+    const mostrar = (ligaActiva==='ARF' || ligaActiva==='BOTH')
+      && (divActiva==='all' || m._data.div===divActiva)
+      && enZona(m);
+    if (mostrar && !map.hasLayer(m)) m.addTo(map);
+    if (!mostrar && map.hasLayer(m)) map.removeLayer(m);
+  });
+  markersARDYTI.forEach(m => {
+    const mostrar = (ligaActiva==='ARDYTI' || ligaActiva==='BOTH') && enZona(m);
+    if (mostrar && !map.hasLayer(m)) m.addTo(map);
+    if (!mostrar && map.hasLayer(m)) map.removeLayer(m);
+  });
+  markersAROFUSA.forEach(m => {
+    const mostrar = (ligaActiva==='AROFUSA' || ligaActiva==='BOTH') && enZona(m);
+    if (mostrar && !map.hasLayer(m)) m.addTo(map);
+    if (!mostrar && map.hasLayer(m)) map.removeLayer(m);
+  });
+  markersLIFA.forEach(m => {
+    const mostrar = (ligaActiva==='LIFA' || ligaActiva==='BOTH') && enZona(m);
+    if (mostrar && !map.hasLayer(m)) m.addTo(map);
+    if (!mostrar && map.hasLayer(m)) map.removeLayer(m);
+  });
+  // Mostrar sub-filtros ARF solo cuando corresponde
+  document.getElementById('divFilterRow').style.display =
+    (ligaActiva==='ARF' || ligaActiva==='BOTH') ? 'flex' : 'none';
+  actualizarBadges();
+  actualizarLabelZona();
+}
+
+function actualizarLabelZona() {
+  const lbl = document.getElementById('labelZona');
+  if (!lbl) return;
+  if (zonaActiva === 'TODAS') { lbl.textContent = ''; return; }
+  const nombres = { N:'Norte', NE:'Noreste', E:'Este', SE:'Sureste',
+                    S:'Sur', SO:'Suroeste', O:'Oeste', NO:'Noroeste' };
+  const total = [...markersARF,...markersARDYTI,...markersAROFUSA,...markersLIFA]
+    .filter(m => map.hasLayer(m)).length;
+  lbl.textContent = `${nombres[zonaActiva]} · ${total} club${total!==1?'es':''}`;
+}
+
+window.setZona = function(zona) {
+  zonaActiva = zona;
+  // Actualizar UI de botones
+  ['N','NE','E','SE','S','SO','O','NO','TODAS'].forEach(z => {
+    const btn = document.getElementById('z'+z);
+    if (!btn) return;
+    if (z === 'TODAS') {
+      btn.classList.toggle('active', zona === 'TODAS');
+    } else {
+      btn.classList.toggle('active', z === zona);
+    }
+  });
+  // Mover el mapa a la zona seleccionada si no es Todas
+  if (zona !== 'TODAS') {
+    // Tomar todos los markers (respetando liga activa) que estén en esa zona
+    const todosFiltrados = [
+      ...(ligaActiva==='ARF'||ligaActiva==='BOTH' ? markersARF : []),
+      ...(ligaActiva==='ARDYTI'||ligaActiva==='BOTH' ? markersARDYTI : []),
+      ...(ligaActiva==='AROFUSA'||ligaActiva==='BOTH' ? markersAROFUSA : []),
+      ...(ligaActiva==='LIFA'||ligaActiva==='BOTH' ? markersLIFA : []),
+      ...markersARF, ...markersARDYTI, ...markersAROFUSA, ...markersLIFA // fallback: todos
+    ];
+    const visible = todosFiltrados.filter(m => m._zona === zona);
+    const uniq = [...new Map(visible.map(m=>[m._leaflet_id,m])).values()];
+    if (uniq.length > 0) {
+      const lats = uniq.map(m=>m._data.lat);
+      const lngs = uniq.map(m=>m._data.lng);
+      const bounds = L.latLngBounds(
+        [Math.min(...lats)-0.012, Math.min(...lngs)-0.012],
+        [Math.max(...lats)+0.012, Math.max(...lngs)+0.012]
+      );
+      map.flyToBounds(bounds, { padding:[30,30], duration:0.7, maxZoom:14 });
+    }
+  } else {
+    map.flyTo([-32.9595, -60.6900], 12, { duration:0.7 });
+  }
+  aplicarFiltros();
+  buildHeat();
+};
+
+function actualizarBadges() {
+  const arf = markersARF.filter(m => map.hasLayer(m)).length;
+  const ard = markersARDYTI.filter(m => map.hasLayer(m)).length;
+  const afs = markersAROFUSA.filter(m => map.hasLayer(m)).length;
+  const lfa = markersLIFA.filter(m => map.hasLayer(m)).length;
+  document.getElementById('badgeARF').textContent = `${arf} clubes ARF`;
+  document.getElementById('badgeARD').textContent = ard > 0 ? `${ard} clubes ARDYTI` : '27 clubes ARDYTI';
+  document.getElementById('badgeAFS').textContent = afs > 0 ? `${afs} clubes AROFUSA` : `${clubesAROFUSA.length} clubes AROFUSA`;
+  document.getElementById('badgeLFA').textContent = lfa > 0 ? `${lfa} clubes LIFA` : `${clubesLIFA.length} clubes LIFA`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// COLEGIOS SECUNDARIOS — Overpass API
+// ══════════════════════════════════════════════════════════════
+const COLOR_PUBLICA     = '#0d6efd'; // azul vivo
+const COLOR_PRIVADA     = '#e91e8c'; // rosa/fucsia
+const COLOR_DESCONOCIDO = '#546e7a'; // gris
+
+let colegioLayer    = null;
+let colegiosVisible = false;
+let escFiltroActivo = 'all';
+
+function distM(a,b,c,d){
+  const R=6371000,dLat=(c-a)*Math.PI/180,dLng=(d-b)*Math.PI/180;
+  const x=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+
+function schoolColor(tipo){
+  if(tipo==='Pública')  return COLOR_PUBLICA;
+  if(tipo==='Privada')  return COLOR_PRIVADA;
+  return COLOR_DESCONOCIDO;
+}
+
+function makeSchoolIcon(tipo){
+  const color = schoolColor(tipo);
+  const letra = tipo==='Pública' ? 'P' : tipo==='Privada' ? 'V' : '?';
+  return L.divIcon({
+    html:`<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+      <div style="background:${color};color:white;border-radius:5px;
+        width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+        box-shadow:0 2px 6px rgba(0,0,0,0.35);font-family:'Segoe UI',sans-serif;
+        font-size:12px;font-weight:800;">${letra}</div>
+    </div>`,
+    className:'', iconSize:[24,24], iconAnchor:[12,12], popupAnchor:[0,-14]
+  });
+}
+
+function detectarTipo(tags){
+  const st=(tags['school:type']||'').toLowerCase();
+  if(st.includes('public')||st.includes('publica')||st.includes('pública')) return 'Pública';
+  if(st.includes('private')||st.includes('privada')) return 'Privada';
+  const ot=(tags['operator:type']||'').toLowerCase();
+  if(ot==='public'||ot==='government') return 'Pública';
+  if(ot==='private'||ot==='ngo')       return 'Privada';
+  const et=(tags['education:type']||tags['isced:type']||'').toLowerCase();
+  if(et.includes('publ')) return 'Pública';
+  if(et.includes('priv')) return 'Privada';
+  const op=(tags.operator||'').toLowerCase();
+  const nm=(tags.name||'').toLowerCase();
+  const pubK=['provincia','provincial','municipal','gobierno','estado','ministerio',
+               'nacion','nacional','epet','eeso','eempi','cens','escuela n°','escuela nro'];
+  const priK=['privad','congreg','hermanas','hermanos','don bosco','salesiano','lasalle',
+               'la salle','marista','marist','instituto','liceo','ort','parroqui','iglesia',
+               'adventista','evangel','metodist','santa ','san ','colegio del'];
+  if(pubK.some(k=>op.includes(k)||nm.includes(k))) return 'Pública';
+  if(priK.some(k=>op.includes(k)||nm.includes(k))) return 'Privada';
+  if(tags.fee==='yes') return 'Privada';
+  if(tags.fee==='no')  return 'Pública';
+  return 'Desconocida';
+}
+
+async function cargarColegios(){
+  const q=`[out:json][timeout:40];
+area["name"="Rosario"]["admin_level"="8"]->.r;
+(
+  node["amenity"="school"](area.r);
+  way["amenity"="school"](area.r);
+)->.s;
+.s out center tags;`;
+  try{
+    const resp=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q)});
+    const data=await resp.json();
+    const lg=L.layerGroup();
+    let pub=0,priv=0,desc=0;
+
+    const secKeywords=[
+      'secundari','secundar','media','bachiller','bachillerato','polimodal','técnica','tecnica',
+      'técnico','tecnico','comercial','industrial','agrotécnic','agrotecnic',
+      'eeso','eempi','eempa','epet','empa','ipem','ipet','cens',
+      'enet','escuela de enseñanza media','eem ','e.e.m',
+      'nacional n°','nacional nro','nacional núm',
+      'inst. técnico','inst. tecnico','inst. nac','instituto nacional',
+      'politécnico','politecnico','superior','normal'
+    ];
+    const excKeywords=['jardin','jardín','primari','inicial','preescolar','infantil','kinder'];
+
+    function esSecundario(tags){
+      const sl=(tags['school:level']||tags['isced:level']||tags['education:level']||'').toLowerCase();
+      if(sl){
+        if(sl.includes('secondary')||sl.includes('2')||sl.includes('3')) return true;
+        if(sl.includes('primary')||sl.includes('preschool')||sl.includes('1')) return false;
+      }
+      const nombre=(tags.name||'').toLowerCase();
+      const op=(tags.operator||'').toLowerCase();
+      const texto=nombre+' '+op;
+      if(excKeywords.some(k=>texto.includes(k))) return false;
+      if(secKeywords.some(k=>texto.includes(k))) return true;
+      const st=(tags['school:type']||'').toLowerCase();
+      if(st.includes('secondary')||st.includes('media')) return true;
+      return true;
+    }
+
+    // Deduplicar: clave = coordenadas redondeadas a 4 decimales + nombre
+    const vistos = new Set();
+
+    data.elements.forEach(el=>{
+      const lat=el.lat||(el.center&&el.center.lat);
+      const lng=el.lon||(el.center&&el.center.lon);
+      if(!lat||!lng) return;
+      if(!esSecundario(el.tags)) return;
+
+      // Clave de deduplicación
+      const clave = `${lat.toFixed(4)}_${lng.toFixed(4)}_${(el.tags.name||'').toLowerCase()}`;
+      if(vistos.has(clave)) return;
+      vistos.add(clave);
+
+      const nombre=el.tags.name||'Escuela s/n';
+      const tipo=detectarTipo(el.tags);
+      const color=schoolColor(tipo);
+      const dir=[el.tags['addr:street']||'',el.tags['addr:housenumber']||''].join(' ').trim();
+      if(tipo==='Pública') pub++;
+      else if(tipo==='Privada') priv++;
+      else desc++;
+
+      // zIndexOffset alto para que el colegio quede encima y su popup no se confunda con el de un club
+      const mk=L.marker([lat,lng],{icon:makeSchoolIcon(tipo), zIndexOffset:500});
+      mk._tipoColegio=tipo;
+
+      const popupHtml=`<div class="popup-content">
+         <h3 style="color:${color}">🎓 ${nombre}</h3>
+         ${dir?`<p>📍 ${dir}</p>`:''}
+         <p>🏫 Nivel: <b>Secundario</b> · Gestión: <b style="color:${color}">${tipo}</b></p>
+         ${el.tags.operator?`<p>🏢 ${el.tags.operator}</p>`:''}
+         <span class="popup-badge" style="background:${color}">
+           ${tipo==='Pública'?'Sec. Pública':tipo==='Privada'?'Sec. Privada':'Sec. s/dato gestión'}
+         </span></div>`;
+      mk.bindPopup(popupHtml, {autoPan:false});
+      lg.addLayer(mk);
+    });
+
+    colegioLayer=lg;
+    const tot=pub+priv+desc;
+    document.getElementById('labelColegios').textContent=
+      `🎓 Sec. (${tot}) — 🔵 ${pub} púb. · 🩷 ${priv} priv.`;
+    return tot;
+  }catch(e){ console.warn('Overpass error',e); return 0; }
+}
+
+window.toggleColegios = async function(){
+  const btn=document.getElementById('btnColegios');
+  const btnAll=document.getElementById('btnEsc_all');
+  const btnPub=document.getElementById('btnEsc_Pública');
+  const btnPriv=document.getElementById('btnEsc_Privada');
+  if(!colegiosVisible){
+    if(!colegioLayer){
+      btn.textContent='⏳ Cargando...';
+      await cargarColegios();
+    }
+    if(colegioLayer){ colegioLayer.addTo(map); colegiosVisible=true; }
+    btn.textContent='🎓 Sec. ✓'; btn.classList.add('toggle-on');
+    if(btnAll)  btnAll.style.display='';
+    if(btnPub)  btnPub.style.display='';
+    if(btnPriv) btnPriv.style.display='';
+  } else {
+    if(colegioLayer) map.removeLayer(colegioLayer);
+    colegiosVisible=false;
+    btn.textContent='🎓 Sec.'; btn.classList.remove('toggle-on');
+    if(btnAll)  btnAll.style.display='none';
+    if(btnPub)  btnPub.style.display='none';
+    if(btnPriv) btnPriv.style.display='none';
+  }
+};
+
+window.filtrarEscuelas = function(tipo){
+  escFiltroActivo=tipo;
+  ['all','Pública','Privada'].forEach(t => {
+    const b = document.getElementById('btnEsc_'+t);
+    if (b) b.classList.toggle('active', t===tipo);
+  });
+  if(!colegioLayer) return;
+  colegioLayer.eachLayer(l=>{
+    const t=l._tipoColegio||'';
+    const visible=tipo==='all'||(tipo==='Pública'&&t==='Pública')||(tipo==='Privada'&&t==='Privada');
+    if(visible&&!map.hasLayer(l)) l.addTo(map);
+    if(!visible&&map.hasLayer(l)) map.removeLayer(l);
+  });
+};
+
+// ── Heatmap ──
+function buildHeat() {
+  const pts=[];
+  markersARF.forEach(m=>{if(map.hasLayer(m)) pts.push([m._data.lat,m._data.lng,1.2]);});
+  markersARDYTI.forEach(m=>{if(map.hasLayer(m)) pts.push([m._data.lat,m._data.lng,1.0]);});
+  markersAROFUSA.forEach(m=>{if(map.hasLayer(m)) pts.push([m._data.lat,m._data.lng,1.0]);});
+  markersLIFA.forEach(m=>{if(map.hasLayer(m)) pts.push([m._data.lat,m._data.lng,1.0]);});
+  if(colegioLayer&&colegiosVisible) colegioLayer.eachLayer(l=>pts.push([l.getLatLng().lat,l.getLatLng().lng,0.7]));
+  if(heatLayer) map.removeLayer(heatLayer);
+  heatLayer = L.heatLayer(pts,{radius:38,blur:30,maxZoom:15,
+    gradient:{0.0:'#ffffb2',0.25:'#fecc5c',0.5:'#fd8d3c',0.75:'#f03b20',1.0:'#bd0026'}});
+  if(heatVisible) heatLayer.addTo(map);
+}
+
+// ── UI ──
+// ══════════════════════════════════════════════════════════════
+// PIN DE USUARIO — click en el mapa
+// ══════════════════════════════════════════════════════════════
+let pingMode    = false;
+const userPins  = [];
+
+const pinIcon = L.divIcon({
+  html:`<div style="position:relative;width:22px;height:22px;">
+    <div class="pin-ring"></div>
+    <div style="width:22px;height:22px;border-radius:50%;background:#e74c3c;
+      border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);
+      display:flex;align-items:center;justify-content:center;">
+      <span style="font-size:11px;">📍</span>
+    </div>
+  </div>`,
+  className:'', iconSize:[22,22], iconAnchor:[11,22], popupAnchor:[0,-24]
+});
+
+window.togglePingMode = function(){
+  pingMode = !pingMode;
+  const btn = document.getElementById('btnPing');
+  if(pingMode){
+    btn.textContent = '📍 Pin ✓';
+    btn.classList.add('toggle-on');
+    document.body.classList.add('ping-mode');
+  } else {
+    btn.textContent = '📍 Pin';
+    btn.classList.remove('toggle-on');
+    document.body.classList.remove('ping-mode');
+  }
+};
+
+window.borrarPin = function(id){
+  const idx = userPins.findIndex(p=>p._pinId===id);
+  if(idx===-1) return;
+  map.removeLayer(userPins[idx]);
+  userPins.splice(idx,1);
+};
+
+window.borrarTodosPins = function(){
+  userPins.forEach(p=>map.removeLayer(p));
+  userPins.length=0;
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  // ── Leyenda ──
+  const legend = L.control({position:'bottomright'});
+  legend.onAdd = () => {
+    const d = document.createElement('div');
+    d.className = 'legend';
+    d.innerHTML = `
+      <h4>Referencias</h4>
+      <div class="legend-item"><div class="legend-dot" style="background:#1a6b3a"></div><span>ARF Primera A (Copa Gobernador Molinas)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2980b9"></div><span>ARF Primera B (Copa Santiago Pinasco)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#8e44ad"></div><span>ARF Primera C (Copa Mariano Reyna)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e07b20"></div><span>ARDYTI Fútbol Infantil</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2e7d32"></div><span>LIFA Fútbol Infantil</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#c0392b;border-radius:3px"></div><span>AROFUSA Futsal (FS)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#0d6efd;border-radius:3px"></div><span>🎓 Sec. Pública (P)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e91e8c;border-radius:3px"></div><span>🎓 Sec. Privada (V)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#546e7a;border-radius:3px"></div><span>🎓 Sec. s/dato (?)</span></div>
+      <div class="legend-item" style="flex-direction:column;align-items:flex-start;gap:3px;">
+        <span>🔥 Densidad de clubes</span>
+        <div class="heat-bar"></div>
+      </div>`;
+    return d;
+  };
+  legend.addTo(map);
+
+  // ── Pin de usuario: click en mapa ──
+  map.on('click', function(e){
+    if(!pingMode) return;
+    const {lat,lng} = e.latlng;
+    const id = Date.now();
+    const mk = L.marker([lat,lng], {icon:pinIcon, zIndexOffset:1000});
+    mk._pinId = id;
+    mk.bindPopup(`
+      <div class="popup-content">
+        <h3 style="color:#e74c3c">📍 Pin</h3>
+        <p>🌐 ${lat.toFixed(5)}, ${lng.toFixed(5)}</p>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button onclick="borrarPin(${id})" style="flex:1;padding:4px 8px;border:none;
+            border-radius:6px;background:#e74c3c;color:white;cursor:pointer;font-size:0.72rem;font-weight:700;">
+            🗑 Borrar
+          </button>
+          <button onclick="borrarTodosPins()" style="flex:1;padding:4px 8px;border:none;
+            border-radius:6px;background:#888;color:white;cursor:pointer;font-size:0.72rem;font-weight:700;">
+            🗑 Todos
+          </button>
+        </div>
+      </div>`, {autoPan:false});
+    mk.addTo(map);
+    mk.openPopup();
+    userPins.push(mk);
+  });
+
+  actualizarBadges();
+  buildHeat();
+  // Pre-calcular zona geográfica de cada marker
+  precalcularZonas(markersARF);
+  precalcularZonas(markersARDYTI);
+  precalcularZonas(markersAROFUSA);
+  precalcularZonas(markersLIFA);
+});
+
+window.setLiga = function(liga) {
+  ligaActiva = liga;
+  document.getElementById('tabARF').className  = 'liga-tab' + (liga==='ARF'    ? ' active-arf'  : '');
+  document.getElementById('tabARD').className  = 'liga-tab' + (liga==='ARDYTI' ? ' active-ard'  : '');
+  document.getElementById('tabAFS').className  = 'liga-tab' + (liga==='AROFUSA'? ' active-afs'  : '');
+  document.getElementById('tabLFA').className  = 'liga-tab' + (liga==='LIFA'   ? ' active-lfa'  : '');
+  document.getElementById('tabBOTH').className = 'liga-tab' + (liga==='BOTH'   ? ' active-both' : '');
+  // Resetear estilos especiales de tabs inactivos
+  const tabAFS = document.getElementById('tabAFS');
+  if (liga !== 'AROFUSA') { tabAFS.style.borderColor = '#c0392b'; tabAFS.style.color = '#c0392b'; }
+  else { tabAFS.style.borderColor = ''; tabAFS.style.color = ''; }
+  const tabLFA = document.getElementById('tabLFA');
+  if (liga !== 'LIFA') { tabLFA.style.borderColor = '#2e7d32'; tabLFA.style.color = '#2e7d32'; }
+  else { tabLFA.style.borderColor = ''; tabLFA.style.color = ''; }
+  if (liga !== 'ARF' && liga !== 'BOTH') divActiva = 'all';
+  aplicarFiltros();
+  buildHeat();
+};
+
+window.setDiv = function(btn, div) {
+  divActiva = div;
+  document.querySelectorAll('.div-filters .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  aplicarFiltros();
+  buildHeat();
+};
+
+
+window.toggleHeat = function() {
+  const btn = document.getElementById('btnHeat');
+  heatVisible = !heatVisible;
+  if (heatVisible) {
+    buildHeat();
+    btn.textContent='🔥 Densidad ✓'; btn.classList.add('toggle-on');
+  } else {
+    if(heatLayer) map.removeLayer(heatLayer);
+    btn.textContent='🔥 Densidad'; btn.classList.remove('toggle-on');
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+// BUSCADOR — dos campos separados
+// Campo 1 (⚽): búsqueda local de clubes por nombre/liga/división
+// Campo 2 (📍): geocodificación de dirección → pin + clubes cercanos
+// ══════════════════════════════════════════════════════════════
+(function initSearch() {
+
+  // ── Helpers compartidos ─────────────────────────────────────
+  function getTodos() { return [...markersARF, ...markersARDYTI, ...markersAROFUSA, ...markersLIFA]; }
+
+  function badgeColor(c) {
+    if (c.liga==='ARDYTI')  return '#e07b20';
+    if (c.liga==='AROFUSA') return '#c0392b';
+    if (c.liga==='LIFA')    return '#2e7d32';
+    if (c.div==='A') return '#1a6b3a';
+    if (c.div==='B') return '#2980b9';
+    return '#8e44ad';
+  }
+  function badgeLabel(c) {
+    if (c.liga==='ARDYTI')  return 'ARDYTI';
+    if (c.liga==='AROFUSA') return 'AROFUSA';
+    if (c.liga==='LIFA')    return 'LIFA';
+    if (c.div==='A') return 'ARF 1ª A';
+    if (c.div==='B') return 'ARF 1ª B';
+    return 'ARF 1ª C';
+  }
+  function norm(s) {
+    return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s]/g,' ');
+  }
+  function hl(text, q) {
+    if (!q||!text) return text;
+    const words = norm(q).trim().split(/\s+/).filter(Boolean).map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
+    if (!words.length) return text;
+    const re = new RegExp(`(${words.join('|')})`, 'gi');
+    const normT = norm(text);
+    let out='', i=0;
+    normT.replace(re, (m, _, offset) => {
+      out += text.slice(i, offset) + `<mark style="background:#fff3b0;border-radius:2px;padding:0 1px">${text.slice(offset, offset+m.length)}</mark>`;
+      i = offset + m.length;
+    });
+    return out + text.slice(i) || text;
+  }
+  function distM(a,b,c,d){
+    const R=6371000, dLat=(c-a)*Math.PI/180, dLng=(d-b)*Math.PI/180;
+    const x=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLng/2)**2;
+    return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+  }
+
+  // ── Dropdown helpers ─────────────────────────────────────────
+  function openDD(ddId, anchorEl) {
+    const dd = document.getElementById(ddId);
+    if (!dd || !anchorEl) return;
+    const rect = anchorEl.getBoundingClientRect();
+    dd.style.top   = (rect.bottom + 4) + 'px';
+    dd.style.right  = (window.innerWidth - rect.right) + 'px';
+    dd.style.left   = 'auto';
+    dd.classList.add('open');
+  }
+  function closeDD(ddId) {
+    const dd = document.getElementById(ddId);
+    if (dd) dd.classList.remove('open');
+  }
+
+  // Cerrar dropdowns al hacer click fuera
+  document.addEventListener('click', e => {
+    const box = document.getElementById('searchBox');
+    const ddC = document.getElementById('ddClub');
+    const ddD = document.getElementById('ddDir');
+    if (box && !box.contains(e.target)) {
+      if (ddC && !ddC.contains(e.target)) closeDD('ddClub');
+      if (ddD && !ddD.contains(e.target)) closeDD('ddDir');
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════
+  // CAMPO 1 — Búsqueda de clubes
+  // ══════════════════════════════════════════════════════════════
+  let clubResults = [];
+  let clubSelIdx  = -1;
+  let clubTimer;
+
+  function scoreClub(c, terms) {
+    const n = norm(c.nombre), d = norm(c.direccion), l = norm(c.liga+' '+badgeLabel(c));
+    let s=0;
+    terms.forEach(t=>{
+      if (n.startsWith(t)) s+=10; else if (n.includes(t)) s+=7;
+      if (d.includes(t)) s+=4;
+      if (l.includes(t)) s+=2;
+    });
+    return s;
+  }
+
+  function searchClubs(q) {
+    const terms = norm(q).trim().split(/\s+/).filter(Boolean);
+    return getTodos()
+      .map(m=>({m, s:scoreClub(m._data,terms)}))
+      .filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,12).map(x=>x.m);
+  }
+
+  function renderClubs(matches, q) {
+    const res = document.getElementById('resClub');
+    const cnt = document.getElementById('cntClub');
+    if (!matches.length) {
+      res.innerHTML = `<div class="search-empty">Sin resultados para "<b>${q}</b>"</div>`;
+      cnt.textContent = '';
+      openDD('ddClub', document.getElementById('sfClub'));
+      return;
+    }
+    cnt.textContent = `${matches.length} club${matches.length!==1?'es':''}`;
+    res.innerHTML = matches.map((m,i) => {
+      const c=m._data, bc=badgeColor(c), bl=badgeLabel(c);
+      return `<div class="search-result-item" data-idx="${i}" onclick="clubClick(${i})">
+        <div class="sri-nombre">${hl(c.nombre,q)}</div>
+        <div class="sri-dir">📍 ${hl(c.direccion,q)}</div>
+        <span class="sri-badge" style="background:${bc}">${bl}</span>
+      </div>`;
+    }).join('');
+    openDD('ddClub', document.getElementById('sfClub'));
+  }
+
+  window.clubClick = function(idx) {
+    const m = clubResults[idx];
+    if (!m) return;
+    closeDD('ddClub');
+    const c = m._data;
+    if (!map.hasLayer(m)) {
+      setLiga('BOTH'); divActiva='all'; zonaActiva='TODAS';
+      document.querySelectorAll('[data-div]').forEach(b=>b.classList.remove('active'));
+      const ba = document.querySelector('[data-div="all"]'); if (ba) ba.classList.add('active');
+      ['N','NE','E','SE','S','SO','O','NO'].forEach(z=>{ const b=document.getElementById('z'+z); if(b) b.classList.remove('active'); });
+      const bT = document.getElementById('zTODAS'); if (bT) bT.classList.add('active');
+    }
+    map.flyTo([c.lat, c.lng], 16, { duration: 0.8 });
+    setTimeout(()=>{ if (m && map.hasLayer(m)) m.openPopup(); }, 900);
+    // Pin pulsante breve
+    const pulse = L.circleMarker([c.lat,c.lng],{radius:18,color:'#f0c040',weight:3,fillOpacity:0,className:'pulse-ring'}).addTo(map);
+    setTimeout(()=>{ try { map.removeLayer(pulse); } catch(e){} }, 2500);
+  };
+
+  window.clearClubSearch = function() {
+    document.getElementById('inputClub').value = '';
+    document.getElementById('clearClub').style.display = 'none';
+    closeDD('ddClub');
+    clubResults=[]; clubSelIdx=-1;
+    document.getElementById('inputClub').focus();
+  };
+
+  // Eventos campo club
+  const inputClub = document.getElementById('inputClub');
+  inputClub.addEventListener('input', e => {
+    const q = e.target.value;
+    document.getElementById('clearClub').style.display = q ? 'block' : 'none';
+    clearTimeout(clubTimer);
+    if (!q.trim()) { closeDD('ddClub'); return; }
+    clubTimer = setTimeout(() => {
+      clubResults = searchClubs(q);
+      renderClubs(clubResults, q);
+    }, 180);
+  });
+  inputClub.addEventListener('keydown', e => {
+    const items = document.querySelectorAll('#ddClub .search-result-item');
+    if (e.key==='ArrowDown') { e.preventDefault(); clubSelIdx=Math.min(clubSelIdx+1,items.length-1); }
+    else if (e.key==='ArrowUp') { e.preventDefault(); clubSelIdx=Math.max(clubSelIdx-1,0); }
+    else if (e.key==='Enter') { if (clubSelIdx>=0) clubClick(clubSelIdx); return; }
+    else if (e.key==='Escape') { clearClubSearch(); return; }
+    else return;
+    items.forEach(el=>el.classList.remove('highlighted'));
+    if (items[clubSelIdx]) { items[clubSelIdx].classList.add('highlighted'); items[clubSelIdx].scrollIntoView({block:'nearest'}); }
+  });
+  inputClub.addEventListener('focus', () => {
+    if (inputClub.value.trim() && document.getElementById('resClub').innerHTML) openDD('ddClub', document.getElementById('sfClub'));
+  });
+
+  // ══════════════════════════════════════════════════════════════
+  // CAMPO 2 — Geocodificación de dirección + pin
+  // ══════════════════════════════════════════════════════════════
+  let geoResults  = [];
+  let dirSelIdx   = -1;
+  let dirTimer;
+  let geoPin      = null;
+  let geoCircle   = null;
+  let nearbyMode  = false;
+  let nearbyList  = [];
+
+  function normGeoref(s) {
+    return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  }
+  function separarInterseccion(q) {
+    const m = q.match(/^(.+?)\s+(?:y|e|esq\.?|&)\s+(.+)$/i);
+    return m ? [m[1].trim(), m[2].trim()] : null;
+  }
+
+  async function geocodeGeoref(q) {
+    const inter = separarInterseccion(q);
+    if (inter) {
+      // Buscar dos calles y calcular punto medio
+      const [a, b] = inter;
+      const base = 'https://apis.datos.gob.ar/georef/api/calles?provincia=santa+fe&departamento=rosario&max=3&campos=nombre,geometria&nombre=';
+      const [rA, rB] = await Promise.all([
+        fetch(base + encodeURIComponent(normGeoref(a))).then(r=>r.json()),
+        fetch(base + encodeURIComponent(normGeoref(b))).then(r=>r.json())
+      ]);
+      const cA = rA.calles?.[0], cB = rB.calles?.[0];
+      if (cA && cB) {
+        function centroide(c) {
+          const pts = c.geometria?.coordinates?.[0];
+          if (!pts||!pts.length) return null;
+          return { lat: pts.reduce((s,p)=>s+p[1],0)/pts.length, lon: pts.reduce((s,p)=>s+p[0],0)/pts.length };
+        }
+        const pA = centroide(cA), pB = centroide(cB);
+        if (pA && pB) return [{
+          lat: ((pA.lat+pB.lat)/2).toString(), lon: ((pA.lon+pB.lon)/2).toString(),
+          display_name: `${cA.nombre} y ${cB.nombre}, Rosario`,
+          _label: `${cA.nombre} y ${cB.nombre}`, _fuente: 'georef_aprox'
+        }];
+      }
+    }
+    // Dirección simple
+    const r = await fetch(`https://apis.datos.gob.ar/georef/api/direcciones?provincia=santa+fe&departamento=rosario&max=5&direccion=${encodeURIComponent(normGeoref(q))}`).then(r=>r.json());
+    return (r.direcciones||[]).map(d=>({
+      lat: d.ubicacion?.lat?.toString(), lon: d.ubicacion?.lon?.toString(),
+      display_name: d.nomenclatura || d.calle?.nombre || q,
+      _label: d.calle?.nombre ? `${d.calle.nombre} ${d.altura?.valor||''}`.trim() : q,
+      _fuente: 'georef'
+    })).filter(x=>x.lat && x.lon);
+  }
+
+  async function geocodeNominatim(q) {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=ar&city=Rosario&q=${encodeURIComponent(q)}`;
+    const r = await fetch(url, {headers:{'Accept-Language':'es'}}).then(r=>r.json());
+    return r.map(x=>({...x, _fuente:'osm', _label: x.display_name.split(',')[0]}));
+  }
+
+  async function geocode(q) {
+    try {
+      const res = await geocodeGeoref(q);
+      if (res.length) return res;
+    } catch(e) {}
+    try { return await geocodeNominatim(q); } catch(e) { return []; }
+  }
+
+  function placePin(lat, lng, label, fuente) {
+    if (geoPin)    { map.removeLayer(geoPin); geoPin=null; }
+    if (geoCircle) { map.removeLayer(geoCircle); geoCircle=null; }
+    const badgeTxt = fuente==='georef' ? '✓ Georef' : fuente==='georef_aprox' ? '~ Aprox.' : 'OSM';
+    const badgeCol = fuente==='georef' ? '#1a6b3a' : fuente==='georef_aprox' ? '#e67e22' : '#888';
+    geoPin = L.marker([lat,lng], {
+      icon: L.divIcon({
+        className:'', iconAnchor:[14,36], popupAnchor:[0,-36],
+        html:`<div style="background:#e74c3c;width:28px;height:28px;border-radius:50% 50% 50% 0;
+          transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4)"></div>`
+      }), zIndexOffset:1200
+    }).addTo(map)
+      .bindPopup(`<b>📍 ${label}</b><br><span style="font-size:0.65rem;background:${badgeCol};color:white;padding:1px 6px;border-radius:8px">${badgeTxt}</span>`)
+      .openPopup();
+    geoCircle = L.circle([lat,lng],{radius:400,color:'#e74c3c',weight:1.5,fillOpacity:0.06}).addTo(map);
+  }
+
+  function renderGeoResults(results, q) {
+    const res = document.getElementById('resDir');
+    const cnt = document.getElementById('cntDir');
+    if (!results.length) {
+      res.innerHTML = `<div class="search-empty">No se encontró "<b>${q}</b>" en Rosario.<br><small>Probá sin tildes o simplificá la dirección</small></div>`;
+      cnt.textContent = '';
+      openDD('ddDir', document.getElementById('sfDir'));
+      return;
+    }
+    cnt.textContent = `${results.length} resultado${results.length!==1?'s':''}`;
+    res.innerHTML = results.map((r,i) => {
+      const fuente = r._fuente||'';
+      const bc = fuente==='georef'?'#1a6b3a': fuente==='georef_aprox'?'#e67e22':'#888';
+      const bt = fuente==='georef'?'✓ Georef': fuente==='georef_aprox'?'~ Aprox.':'OSM';
+      const label = r._label || r.display_name.split(',')[0];
+      return `<div class="search-result-item" data-idx="${i}" onclick="dirClick(${i})">
+        <div class="sri-nombre" style="display:flex;align-items:center;gap:5px">
+          📍 <b>${label}</b>
+          <span style="font-size:0.58rem;background:${bc};color:white;padding:1px 6px;border-radius:8px">${bt}</span>
+        </div>
+        <div class="sri-dir" style="color:#1a3a6b;font-weight:600;margin-top:2px">Poner pin aquí →</div>
+      </div>`;
+    }).join('');
+    openDD('ddDir', document.getElementById('sfDir'));
+  }
+
+  function renderNearby(lat, lng, label) {
+    const res = document.getElementById('resDir');
+    const cnt = document.getElementById('cntDir');
+    const todos = getTodos();
+    nearbyList = todos.map(m=>({m, d:distM(lat,lng,m._data.lat,m._data.lng)}))
+      .sort((a,b)=>a.d-b.d).slice(0,8).map(x=>x.m);
+    cnt.textContent = `${nearbyList.length} clubes cercanos`;
+    const cab = `<div style="font-size:0.65rem;color:#888;padding:6px 10px 4px;border-bottom:1px solid #eee">
+      <b>📍 ${label}</b> — clubes más cercanos:</div>`;
+    res.innerHTML = cab + nearbyList.map((m,i)=>{
+      const c=m._data, bc=badgeColor(c), bl=badgeLabel(c);
+      const d = distM(lat,lng,c.lat,c.lng);
+      const dStr = d<1000 ? Math.round(d)+'m' : (d/1000).toFixed(1)+'km';
+      return `<div class="search-result-item" data-idx="${i}" onclick="nearbyClick(${i})">
+        <div class="sri-nombre">${c.nombre} <span style="font-weight:400;color:#999;font-size:0.62rem">${dStr}</span></div>
+        <div class="sri-dir">📍 ${c.direccion}</div>
+        <span class="sri-badge" style="background:${bc}">${bl}</span>
+      </div>`;
+    }).join('');
+    nearbyMode = true;
+    openDD('ddDir', document.getElementById('sfDir'));
+  }
+
+  window.dirClick = function(idx) {
+    const place = geoResults[idx];
+    if (!place) return;
+    const lat = parseFloat(place.lat), lng = parseFloat(place.lon);
+    const label = place._label || place.display_name.split(',')[0];
+    placePin(lat, lng, label, place._fuente);
+    map.flyTo([lat,lng], 16, {duration:0.8});
+    renderNearby(lat, lng, label);
+  };
+
+  window.nearbyClick = function(idx) {
+    const m = nearbyList[idx];
+    if (!m) return;
+    closeDD('ddDir');
+    const c = m._data;
+    map.flyTo([c.lat,c.lng], 16, {duration:0.8});
+    setTimeout(()=>{ if (map.hasLayer(m)) m.openPopup(); }, 900);
+  };
+
+  window.clearDirSearch = function() {
+    document.getElementById('inputDir').value = '';
+    document.getElementById('clearDir').style.display = 'none';
+    closeDD('ddDir');
+    geoResults=[]; dirSelIdx=-1; nearbyMode=false; nearbyList=[];
+    if (geoPin)    { map.removeLayer(geoPin); geoPin=null; }
+    if (geoCircle) { map.removeLayer(geoCircle); geoCircle=null; }
+    document.getElementById('inputDir').focus();
+  };
+
+  // Eventos campo dirección
+  const inputDir = document.getElementById('inputDir');
+  inputDir.addEventListener('input', e => {
+    const q = e.target.value;
+    document.getElementById('clearDir').style.display = q ? 'block' : 'none';
+    clearTimeout(dirTimer);
+    nearbyMode = false;
+    if (!q.trim()) { closeDD('ddDir'); return; }
+    document.getElementById('resDir').innerHTML = `<div class="search-empty">🔍 Buscando <b>${q}</b>…</div>`;
+    openDD('ddDir', document.getElementById('sfDir'));
+    dirTimer = setTimeout(async () => {
+      geoResults = await geocode(q);
+      renderGeoResults(geoResults, q);
+    }, 550);
+  });
+  inputDir.addEventListener('keydown', e => {
+    const ddId = nearbyMode ? 'ddDir' : 'ddDir';
+    const items = document.querySelectorAll('#ddDir .search-result-item');
+    if (e.key==='ArrowDown') { e.preventDefault(); dirSelIdx=Math.min(dirSelIdx+1,items.length-1); }
+    else if (e.key==='ArrowUp') { e.preventDefault(); dirSelIdx=Math.max(dirSelIdx-1,0); }
+    else if (e.key==='Enter') {
+      if (dirSelIdx>=0) { nearbyMode ? nearbyClick(dirSelIdx) : dirClick(dirSelIdx); }
+      else if (!nearbyMode) { const q=inputDir.value; if(q.trim()) geocode(q).then(r=>{ geoResults=r; renderGeoResults(r,q); }); }
+      return;
+    } else if (e.key==='Escape') { clearDirSearch(); return; }
+    else return;
+    items.forEach(el=>el.classList.remove('highlighted'));
+    if (items[dirSelIdx]) { items[dirSelIdx].classList.add('highlighted'); items[dirSelIdx].scrollIntoView({block:'nearest'}); }
+  });
+  inputDir.addEventListener('focus', () => {
+    if (inputDir.value.trim() && document.getElementById('resDir').innerHTML) openDD('ddDir', document.getElementById('sfDir'));
+  });
+
+  // ── Evitar propagación al mapa ──────────────────────────────
+  ['searchBox','ddClub','ddDir'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { L.DomEvent.disableClickPropagation(el); L.DomEvent.disableScrollPropagation(el); }
+  });
+})();
+</script>
+</body>
+</html>
