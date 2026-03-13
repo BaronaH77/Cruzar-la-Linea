@@ -31,7 +31,7 @@
     .header-badge.afs { background: #c0392b; color: white; }
     .header-badge.lfa { background: #2e7d32; color: white; }
     #map { flex: 1; }
-
+ 
     /* ── Barra de filtros superior ── */
     .filter-bar {
       background: #0f2a52;
@@ -45,21 +45,21 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.25);
     }
     .filter-bar::-webkit-scrollbar { display: none; }
-
+ 
     .filter-group {
       display: flex; align-items: center; gap: 4px;
       padding: 5px 10px; flex-shrink: 0;
       border-right: 1px solid rgba(255,255,255,0.1);
     }
     .filter-group:last-child { border-right: none; }
-
+ 
     .filter-group-label {
       font-size: 0.52rem; font-weight: 700; color: rgba(255,255,255,0.35);
       letter-spacing: 1px; text-transform: uppercase;
       writing-mode: horizontal-tb; white-space: nowrap;
       margin-right: 2px;
     }
-
+ 
     /* Tabs de liga */
     .liga-tab {
       padding: 4px 9px; border: 1.5px solid rgba(255,255,255,0.2); border-radius: 20px;
@@ -72,7 +72,7 @@
     .liga-tab.active-afs  { background: #c0392b; color: white; border-color: #c0392b; }
     .liga-tab.active-lfa  { background: #2e7d32; color: white; border-color: #2e7d32; }
     .liga-tab.active-both { background: #f0c040; color: #1a3a6b; border-color: #f0c040; }
-
+ 
     /* Botones de división, colegios, etc */
     .filter-btn {
       background: transparent; border: 1.5px solid rgba(255,255,255,0.2); border-radius: 20px;
@@ -88,7 +88,7 @@
     #btnEsc_all.active    { background:#e0e0e0; color:#222; border-color:#e0e0e0; }
     #btnEsc_Pública.active { background:#0d6efd; color:white; border-color:#0d6efd; }
     #btnEsc_Privada.active { background:#e91e8c; color:white; border-color:#e91e8c; }
-
+ 
     /* Grilla de zonas en la barra */
     .zona-grid {
       display: grid;
@@ -107,10 +107,10 @@
     .zona-btn.centro.active { background: #f0c040; color: #1a3a6b; border-color: #f0c040; }
     #labelZona { font-size:0.58rem; color:rgba(255,255,255,0.45); white-space:nowrap; padding-left:4px; }
     #labelColegios { font-size:0.55rem; color:rgba(255,255,255,0.4); white-space:nowrap; max-width:90px; line-height:1.3; }
-
+ 
     .bar-divider { width:1px; background:rgba(255,255,255,0.1); align-self:stretch; flex-shrink:0; }
     .separator { display:none; } /* ya no se usa */
-
+ 
     /* ── Pin de usuario ── */
     .ping-mode #map { cursor: crosshair !important; }
     @keyframes pingPulse {
@@ -123,7 +123,7 @@
       border: 3px solid #e74c3c; top:-3px; left:-3px;
       animation: pingPulse 1.4s ease-out infinite;
     }
-
+ 
     /* ── Popups ── */
     .leaflet-popup-content-wrapper {
       background:#fff; border:1px solid #ddd; border-radius:12px;
@@ -144,7 +144,7 @@
     .badge-C   { background:#8e44ad; }
     .badge-ard { background:#e07b20; }
     .badge-lfa { background:#2e7d32; }
-
+ 
     /* ── Buscador en barra ── */
     /* ── Buscadores (dos campos apilados verticalmente) ── */
     .search-group {
@@ -204,7 +204,7 @@
     .search-empty { font-size:0.7rem; color:#aaa; text-align:center; padding:12px 6px; line-height:1.5; }
     .search-count { font-size:0.6rem; color:#aaa; padding: 4px 10px 6px;
       text-align:right; border-top: 1px solid #f0f0f0; }
-
+ 
     /* ── Leyenda ── */
     .legend {
       position:absolute; bottom:30px; right:10px; z-index:1000;
@@ -237,10 +237,10 @@
     <div class="header-badge lfa" id="badgeLFA">15 clubes LIFA</div>
   </div>
 </header>
-
+ 
 <!-- ── Barra de filtros superior ── -->
 <div class="filter-bar" id="filterBar">
-
+ 
   <!-- Liga -->
   <div class="filter-group">
     <span class="filter-group-label">Liga</span>
@@ -250,7 +250,7 @@
     <div class="liga-tab" id="tabLFA"             onclick="setLiga('LIFA')"    style="border-color:#2e7d32;color:#2e7d32;">LIFA</div>
     <div class="liga-tab" id="tabBOTH"            onclick="setLiga('BOTH')">Todas</div>
   </div>
-
+ 
   <!-- División ARF -->
   <div class="filter-group" id="divFilterRow">
     <span class="filter-group-label">División</span>
@@ -259,7 +259,7 @@
     <button class="filter-btn" data-div="B" onclick="setDiv(this,'B')">🔵 1ª B</button>
     <button class="filter-btn" data-div="C" onclick="setDiv(this,'C')">🟣 1ª C</button>
   </div>
-
+ 
   <!-- Zona -->
   <div class="filter-group">
     <span class="filter-group-label">Zona</span>
@@ -276,7 +276,7 @@
     </div>
     <div id="labelZona"></div>
   </div>
-
+ 
   <!-- Colegios -->
   <div class="filter-group">
     <span class="filter-group-label">Colegios</span>
@@ -286,14 +286,14 @@
     <button class="filter-btn"        id="btnEsc_Privada"  onclick="filtrarEscuelas('Privada')" style="display:none;border-color:#e91e8c;color:#e91e8c">🩷 Priv.</button>
     <div id="labelColegios"></div>
   </div>
-
+ 
   <!-- Herramientas -->
   <div class="filter-group">
     <span class="filter-group-label">Herr.</span>
     <button class="filter-btn" id="btnPing" onclick="togglePingMode()">📍 Pin</button>
     <button class="filter-btn" id="btnHeat" onclick="toggleHeat()">🔥 Densidad</button>
   </div>
-
+ 
   <!-- Buscadores: club + dirección (apilados verticalmente) -->
   <div class="search-group" id="searchBox">
     <!-- Campo 1: buscar club -->
@@ -311,11 +311,11 @@
       <button class="search-clear" id="clearDir" onclick="clearDirSearch()">✕</button>
     </div>
   </div>
-
+ 
 </div>
-
+ 
 <div id="map"></div>
-
+ 
 <!-- Dropdowns — fuera del filter-bar para evitar overflow:auto que los recorta -->
 <div class="search-dropdown" id="ddClub">
   <div class="search-results" id="resClub"></div>
@@ -325,13 +325,13 @@
   <div class="search-results" id="resDir"></div>
   <div class="search-count"   id="cntDir"></div>
 </div>
-
+ 
 <script>
 const map = L.map('map', { center:[-32.960,-60.660], zoom:13 });
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
   attribution:'&copy; OpenStreetMap &copy; CARTO', subdomains:'abcd', maxZoom:19
 }).addTo(map);
-
+ 
 // ══════════════════════════════════════════════════════════════
 // DATOS – ARF (Asociación Rosarina de Fútbol)
 // liga: "ARF" | div: "A" | "B" | "C"
@@ -411,7 +411,7 @@ const clubesARF = [
   { nombre:"Sp. Juvenil Rosario", div:"C", fundacion:2020, liga:"ARF", direccion:"Zona oeste, Rosario",                                                lat:-32.9730, lng:-60.7300 }, // ⚠
   { nombre:"Nuevo Horizonte",     div:"C", fundacion:2020, liga:"ARF", direccion:"Zona noroeste, Rosario",                                             lat:-32.9250, lng:-60.7250 }, // ⚠
 ];
-
+ 
 // ══════════════════════════════════════════════════════════════
 // DATOS – ARDYTI (Asociación Rosarina Deportiva y Turismo Infantil)
 // Solo clubes con cancha/predio propio confirmado
@@ -447,7 +447,7 @@ const clubesARDYTI = [
   { nombre:"Parque Oeste",             div:"ard", liga:"ARDYTI", fundacion:1980, direccion:"Zona Parque Oeste, noroeste",                                   lat:-32.9680, lng:-60.7200 }, // ⚠
   { nombre:"Renacimiento",             div:"ard", liga:"ARDYTI", fundacion:1990, direccion:"Zona sur, Rosario",                                             lat:-33.0100, lng:-60.6750 }, // ⚠
 ];
-
+ 
 // ══════════════════════════════════════════════════════════════
 // DATOS – AROFUSA (Asociación Rosarina de Fútbol de Salón)
 // Futsal masculino, femenino, veteranos e inferiores
@@ -487,13 +487,13 @@ const clubesAROFUSA = [
   { nombre:"Echesortu F.C. (FS)",     liga:"AROFUSA", fundacion:1933, direccion:"San Nicolás al 1250",                               lat:-32.9460, lng:-60.6430 }, // ✔
   { nombre:"Jockey Club (FS)",        liga:"AROFUSA", fundacion:1900, direccion:"Eva Perón esq. Wilde",                              lat:-32.9345, lng:-60.6412 }, // ✔
 ];
-
+ 
 // ── Colores por liga y división ──
 const coloresARF = { A:'#1a6b3a', B:'#2980b9', C:'#8e44ad' };
 const colorARDYTI  = '#e07b20';
 const colorAROFUSA = '#c0392b'; // rojo futsal
 const colorLIFA    = '#2e7d32'; // verde oscuro fútbol infantil
-
+ 
 // ══════════════════════════════════════════════════════════════
 // DATOS – LIFA (Liga Infantil de Fútbol Asociado)
 // Fútbol infantil Rosario | Mencionada por Municipalidad de Rosario
@@ -518,7 +518,7 @@ const clubesLIFA = [
   { nombre:"Progreso Infantil",    div:"lfa", liga:"LIFA", fundacion:1988, direccion:"Zona norte, Rosario",                                 lat:-32.9200, lng:-60.6900 }, // ⚠
   { nombre:"Club del Barrio Sur",  div:"lfa", liga:"LIFA", fundacion:1982, direccion:"Zona sur, Rosario",                                   lat:-33.0080, lng:-60.6550 }, // ⚠
 ];
-
+ 
 // ── Escudos ──
 const escudos = {
   "Newell's Old Boys": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Escudo_del_Club_Atletico_Newells_Old_Boys.svg/80px-Escudo_del_Club_Atletico_Newells_Old_Boys.svg.png",
@@ -530,7 +530,7 @@ const escudos = {
   "Rosario Athletic":  "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Escudo_Rosario_Athletic_Club.png/80px-Escudo_Rosario_Athletic_Club.png",
   "Provincial":        "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Esc_Provincial.png/80px-Esc_Provincial.png",
 };
-
+ 
 function crearIcono(nombre, color, size=42) {
   const escudo = escudos[nombre];
   const inner = escudo
@@ -551,7 +551,7 @@ function crearIcono(nombre, color, size=42) {
     className:'', iconSize:[112,62], iconAnchor:[56,62], popupAnchor:[0,-64]
   });
 }
-
+ 
 // ── Crear markers ──
 const markersARF    = [];
 const markersARDYTI = [];
@@ -559,16 +559,16 @@ const markersAROFUSA = [];
 const markersLIFA   = [];
 let heatLayer = null;
 let heatVisible = false;
-
+ 
 // ══════════════════════════════════════════════════════════════
 // GEOCODIFICACIÓN AUTOMÁTICA — Georef + Nominatim (igual que buscador)
 // Todos los clubes se posicionan via API en lugar de coords hardcodeadas
 // ══════════════════════════════════════════════════════════════
-
+ 
 function normGeoref(s) {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 }
-
+ 
 async function geocodificarDireccion(dir) {
   // 1) Georef dirección simple
   try {
@@ -585,7 +585,7 @@ async function geocodificarDireccion(dir) {
   } catch(e) {}
   return null;
 }
-
+ 
 // Crea y agrega un marker ARF con coords geocodificadas
 async function crearMarkerARF(c) {
   const color = coloresARF[c.div];
@@ -607,7 +607,7 @@ async function crearMarkerARF(c) {
   markersARF.push(m);
   m.addTo(map);
 }
-
+ 
 async function crearMarkerARDYTI(c) {
   const dirBuscar = c.direccion.split('/')[0].replace(/Sede:|Cancha:|Complejo:/gi,'').trim();
   const geo = await geocodificarDireccion(dirBuscar);
@@ -624,7 +624,7 @@ async function crearMarkerARDYTI(c) {
   m._data = { ...c, lat: coords[0], lng: coords[1] };
   markersARDYTI.push(m);
 }
-
+ 
 async function crearMarkerAROFUSA(c) {
   const label = c.nombre.length > 16 ? c.nombre.substring(0,15)+'…' : c.nombre;
   const icon = L.divIcon({
@@ -657,7 +657,7 @@ async function crearMarkerAROFUSA(c) {
   m._data = { ...c, div: 'fs', lat: coords[0], lng: coords[1] };
   markersAROFUSA.push(m);
 }
-
+ 
 async function crearMarkerLIFA(c) {
   const dirBuscar = c.direccion.split('/')[0].trim();
   const geo = await geocodificarDireccion(dirBuscar);
@@ -674,7 +674,7 @@ async function crearMarkerLIFA(c) {
   m._data = { ...c, lat: coords[0], lng: coords[1] };
   markersLIFA.push(m);
 }
-
+ 
 // ── Lanzar geocodificación de todos los clubes en paralelo (lotes de 5 para no saturar la API) ──
 async function geocodificarTodos() {
   async function lote(arr, fn, size=5) {
@@ -730,7 +730,7 @@ async function geocodificarTodos() {
       }
     } catch(e) {}
   }
-
+ 
   // ── 🏘 CASAS ARGENPROP — Alquiler 4+ dorm. Rosario ──
   const casasArgenprop = [
     { direccion: "Italia 1100", precio: "$ 2.500.000", features: "90 m² · 5 dorm. · 1 baño", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario-6-ambientes--18699213" },
@@ -752,19 +752,24 @@ async function geocodificarTodos() {
     { direccion: "Av. Pte. Perón al 3700", precio: "$ 1.800.000", features: "378 m² · 5 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario-10-ambientes--19192160" },
     { direccion: "Oroño al 1500", precio: "$ 7.000.000", features: "465 m² · 5 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario-11-ambientes--19217659" }
   ];
-
+ 
+  // Ícono Argenprop: verde con etiqueta "AP" y casa verde rombo
   const argenpropIcon = (dir) => L.divIcon({
     className: '',
-    iconAnchor: [16, 38],
-    popupAnchor: [0, -38],
+    iconAnchor: [16, 42],
+    popupAnchor: [0, -42],
     html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-      <div style="font-size:0.5rem;font-weight:800;background:#00a650;color:white;
-        padding:2px 6px;border-radius:4px;white-space:nowrap;max-width:100px;overflow:hidden;
-        text-overflow:ellipsis;box-shadow:0 1px 3px rgba(0,0,0,0.35);">${dir}</div>
-      <div style="font-size:1.6rem;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));">🏡</div>
+      <div style="font-size:0.48rem;font-weight:800;background:#00a650;color:white;
+        padding:2px 5px;border-radius:4px;white-space:nowrap;max-width:95px;overflow:hidden;
+        text-overflow:ellipsis;box-shadow:0 1px 3px rgba(0,0,0,0.35);letter-spacing:0.01em;">🟢 ${dir}</div>
+      <div style="width:28px;height:28px;background:#00a650;border-radius:50%;
+        display:flex;align-items:center;justify-content:center;
+        box-shadow:0 2px 6px rgba(0,166,80,0.55);border:2px solid white;">
+        <span style="font-size:1rem;line-height:1;">🏡</span>
+      </div>
     </div>`
   });
-
+ 
   for (const casa of casasArgenprop) {
     try {
       const geo = await geocodificarDireccion(casa.direccion);
@@ -788,7 +793,75 @@ async function geocodificarTodos() {
     } catch(e) {}
     await new Promise(r => setTimeout(r, 200));
   }
-
+ 
+  // ── 🏘 CASAS ZONAPROP — Alquiler 4 dorm. Rosario ──
+  const casasZonaprop = [
+    { direccion: "España 865, Rosario",           precio: "USD 2.500",    features: "273 m² · 6 amb. · 4 dorm. · 2 baños",           link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-en-rosario-58567176.html" },
+    { direccion: "Godoy Cruz 422, Rosario",        precio: "$ 2.400.000", features: "240 m² · 7 amb. · 4 dorm. · 4 baños · 3 coch.",  link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-godoy-cruz-422-57556513.html" },
+    { direccion: "Dorrego 1182, Rosario",          precio: "$ 1.600.000", features: "200 m² · 4 dorm.",                                link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-en-rosario-58567176.html" },
+    { direccion: "Bv. Seguí 1036, Rosario",        precio: "$ 1.400.000", features: "259 m² · 7 amb. · 4 dorm. · 3 baños · 2 coch.",  link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-bv.-segui-1036-casa-de-4-dorm.-con-cochera-en-58571948.html" },
+    { direccion: "Av. Pellegrini 9, Rosario",      precio: "$ 1.900.000", features: "340 m² · 5 amb. · 4 dorm.",                      link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-alquiler-imponente-casa-4-dorm.-zona-centro-aledana-57514616.html" },
+    { direccion: "Juan José Paso 8745, Rosario",   precio: "$ 2.700.000", features: "310 m² · 5 amb. · 4 dorm. · 5 baños · 2 coch.",  link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-excelente-casa-en-fisherton-en-barrio-privado-4-dorm.-58264408.html" },
+    { direccion: "Güemes 2915, Rosario",           precio: "Consultar",   features: "322 m² · 8 amb. · 4 dorm. · 2 baños",            link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-alquiler-apto-comercio-en-pichincha-57296221.html" },
+    { direccion: "Blas Parera 421, Rosario",       precio: "$ 1.500.000", features: "260 m² · 7 amb. · 4 dorm. · 1 baño",             link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-blas-parera-421-57665743.html" },
+    { direccion: "Castellanos 1500, Rosario",      precio: "$ 1.300.000", features: "150 m² · 4 dorm. · 2 baños · 1 coch.",            link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-en-echesortu.-4-dorm.-patio.-cochera.-quincho.-58576685.html" },
+    { direccion: "Rubén Darío 1279, Rosario",      precio: "Consultar",   features: "110 m² · 7 amb. · 4 dorm. · 2 baños",            link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-hermosa-casa-con-cochera-en-arroyito-51378889.html" },
+    { direccion: "Av. Ovidio Lagos 2401, Rosario", precio: "$ 1.800.000", features: "200 m² · 5 amb. · 4 dorm. · 2 baños",            link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-propiedad-comercial-en-esquina-200-m-sup2--en-ov.-57136181.html" },
+    { direccion: "Av. Pellegrini 1487, Rosario",   precio: "$ 1.700.000", features: "230 m² · 5 amb. · 4 dorm. · 2 baños",            link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-hermosa-casa-en-alquiler-4-dorm!-58062959.html" },
+    { direccion: "Balcarce 738, Rosario",          precio: "$ 2.500.000", features: "259 m² · 6 amb. · 4 dorm. · 4 baños",            link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-en-rosario-57453693.html" },
+    { direccion: "Gaboto 1210, Rosario",           precio: "$ 800.000",   features: "87 m² · 5 amb. · 4 dorm. · 2 baños",             link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-alquiler-casa-4-dorm.-gaboto-1210-barrio-58556696.html" },
+    { direccion: "Juan José Paso 8700, Rosario",   precio: "USD 2.000",   features: "1713 m² · 9 amb. · 4 dorm. · 4 baños · 2 coch.", link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-en-venta-con-pileta-y-jardin-57458258.html" },
+    { direccion: "Tucumán 5770, Rosario",          precio: "$ 700.000",   features: "130 m² · 6 amb. · 4 dorm. · 2 baños · 1 coch.",  link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-alquiler-casa-de-4-dorm.-tucuman-5700-58518411.html" },
+    { direccion: "Bv. Oroño 0, Rosario",           precio: "USD 5.000",   features: "850 m² · 8 amb. · 4 dorm. · 4 baños · 7 coch.",  link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-alquiler-institucional-unica-casa-en-bv.-orono-58535462.html" },
+    { direccion: "Av. Carlos Colombres 1100, Rosario", precio: "$ 1.850.000", features: "216 m² · 5 amb. · 4 dorm. · 3 baños · 3 coch.", link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-4-dorm.-alquiler-alberdi-rosario-58251709.html" },
+    { direccion: "Herrera 900, Rosario",           precio: "$ 1.400.000", features: "200 m² · 5 amb. · 4 dorm. · 3 baños · 1 coch.",  link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-4-dorm.-alquiler-alberdi-rosario-58251709.html" },
+    { direccion: "Italia 1070, Rosario",           precio: "$ 1.000.000", features: "120 m² · 6 amb. · 4 dorm. · 1 baño",             link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-en-planta-alta-en-alquiler-en-italia-1070-58566308.html" },
+    { direccion: "La Paz y Necochea, Rosario",     precio: "$ 580.000",   features: "109 m² · 5 amb. · 4 dorm. · 2 baños",            link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-venta-casa-4-dorm.-58560785.html" },
+    { direccion: "San Lorenzo 4081, Rosario",      precio: "$ 650.000",   features: "166 m² · 6 amb. · 4 dorm. · 2 baños",            link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-san-lorenzo-4081-planta-alta-42222652.html" },
+    { direccion: "Dorrego 2700, Rosario",          precio: "$ 980.000",   features: "120 m² · 8 amb. · 4 dorm. · 1 baño",             link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-al-frente-de-3-dorm.-con-patio-y-terraza-en-58542004.html" },
+  ];
+ 
+  // Ícono ZonaProp: naranja con etiqueta "ZP" y casa naranja
+  const zonapropIcon = (dir) => L.divIcon({
+    className: '',
+    iconAnchor: [16, 42],
+    popupAnchor: [0, -42],
+    html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+      <div style="font-size:0.48rem;font-weight:800;background:#ff6000;color:white;
+        padding:2px 5px;border-radius:4px;white-space:nowrap;max-width:95px;overflow:hidden;
+        text-overflow:ellipsis;box-shadow:0 1px 3px rgba(0,0,0,0.35);letter-spacing:0.01em;">🟠 ${dir}</div>
+      <div style="width:28px;height:28px;background:#ff6000;border-radius:6px;
+        display:flex;align-items:center;justify-content:center;
+        box-shadow:0 2px 6px rgba(255,96,0,0.55);border:2px solid white;">
+        <span style="font-size:1rem;line-height:1;">🏠</span>
+      </div>
+    </div>`
+  });
+ 
+  for (const casa of casasZonaprop) {
+    try {
+      const geo = await geocodificarDireccion(casa.direccion);
+      if (!geo) continue;
+      const labelCorto = casa.direccion.replace(', Rosario','').substring(0,18);
+      L.marker([geo.lat, geo.lng], { icon: zonapropIcon(labelCorto), zIndexOffset: 1300 })
+        .bindPopup(`
+          <div class="popup-content">
+            <h3 style="color:white;background:#ff6000;margin:-8px -8px 8px;padding:8px 10px;border-radius:6px 6px 0 0;">
+              🏠 Alquiler · ZonaProp
+            </h3>
+            <p>📍 ${casa.direccion.replace(', Rosario','')}</p>
+            <p>💰 ${casa.precio}</p>
+            <p style="font-size:0.72rem;color:#555">${casa.features}</p>
+            <a href="${casa.link}" target="_blank"
+              style="display:inline-block;margin-top:6px;background:#ff6000;color:white;
+                font-size:0.7rem;font-weight:700;padding:4px 10px;border-radius:6px;
+                text-decoration:none;">🔗 Ver en ZonaProp</a>
+          </div>`, { maxWidth: 260 })
+        .addTo(map);
+    } catch(e) {}
+    await new Promise(r => setTimeout(r, 200));
+  }
+ 
   // Aplicar visibilidad inicial y heatmap después de cargar todos
   precalcularZonas(markersARF);
   precalcularZonas(markersARDYTI);
@@ -797,20 +870,20 @@ async function geocodificarTodos() {
   aplicarFiltros();
   buildHeat();
 }
-
+ 
 geocodificarTodos();
-
-
-
+ 
+ 
+ 
 // ── Estado del filtro ──
 let ligaActiva = 'ARF'; // 'ARF' | 'ARDYTI' | 'AROFUSA' | 'LIFA' | 'BOTH'
 let divActiva  = 'all';
 let zonaActiva = 'TODAS'; // 'TODAS' | 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SO' | 'O' | 'NO'
-
+ 
 // ── Centro de referencia para cálculo de zonas (centro geográfico de Rosario) ──
 const ZONA_CLAT = -32.9595;
 const ZONA_CLNG = -60.6900;
-
+ 
 function calcularZona(lat, lng) {
   const dlat = -(lat - ZONA_CLAT); // positivo = norte
   const dlng = lng - ZONA_CLNG;    // positivo = este
@@ -824,17 +897,17 @@ function calcularZona(lat, lng) {
   if (ang >= -112.5 && ang < -67.5)  return 'O';
   return 'NO';
 }
-
+ 
 // Pre-calcular zona de cada marker
 function precalcularZonas(markers) {
   markers.forEach(m => { m._zona = calcularZona(m._data.lat, m._data.lng); });
 }
-
+ 
 function enZona(m) {
   if (zonaActiva === 'TODAS') return true;
   return m._zona === zonaActiva;
 }
-
+ 
 function aplicarFiltros() {
   markersARF.forEach(m => {
     const mostrar = (ligaActiva==='ARF' || ligaActiva==='BOTH')
@@ -864,7 +937,7 @@ function aplicarFiltros() {
   actualizarBadges();
   actualizarLabelZona();
 }
-
+ 
 function actualizarLabelZona() {
   const lbl = document.getElementById('labelZona');
   if (!lbl) return;
@@ -875,7 +948,7 @@ function actualizarLabelZona() {
     .filter(m => map.hasLayer(m)).length;
   lbl.textContent = `${nombres[zonaActiva]} · ${total} club${total!==1?'es':''}`;
 }
-
+ 
 window.setZona = function(zona) {
   zonaActiva = zona;
   // Actualizar UI de botones
@@ -915,7 +988,7 @@ window.setZona = function(zona) {
   aplicarFiltros();
   buildHeat();
 };
-
+ 
 function actualizarBadges() {
   const arf = markersARF.filter(m => map.hasLayer(m)).length;
   const ard = markersARDYTI.filter(m => map.hasLayer(m)).length;
@@ -926,30 +999,30 @@ function actualizarBadges() {
   document.getElementById('badgeAFS').textContent = afs > 0 ? `${afs} clubes AROFUSA` : `${clubesAROFUSA.length} clubes AROFUSA`;
   document.getElementById('badgeLFA').textContent = lfa > 0 ? `${lfa} clubes LIFA` : `${clubesLIFA.length} clubes LIFA`;
 }
-
+ 
 // ══════════════════════════════════════════════════════════════
 // COLEGIOS SECUNDARIOS — Overpass API
 // ══════════════════════════════════════════════════════════════
 const COLOR_PUBLICA     = '#0d6efd'; // azul vivo
 const COLOR_PRIVADA     = '#e91e8c'; // rosa/fucsia
 const COLOR_DESCONOCIDO = '#546e7a'; // gris
-
+ 
 let colegioLayer    = null;
 let colegiosVisible = false;
 let escFiltroActivo = 'all';
-
+ 
 function distM(a,b,c,d){
   const R=6371000,dLat=(c-a)*Math.PI/180,dLng=(d-b)*Math.PI/180;
   const x=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLng/2)**2;
   return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
-
+ 
 function schoolColor(tipo){
   if(tipo==='Pública')  return COLOR_PUBLICA;
   if(tipo==='Privada')  return COLOR_PRIVADA;
   return COLOR_DESCONOCIDO;
 }
-
+ 
 function makeSchoolIcon(tipo){
   const color = schoolColor(tipo);
   const letra = tipo==='Pública' ? 'P' : tipo==='Privada' ? 'V' : '?';
@@ -963,7 +1036,7 @@ function makeSchoolIcon(tipo){
     className:'', iconSize:[24,24], iconAnchor:[12,12], popupAnchor:[0,-14]
   });
 }
-
+ 
 function detectarTipo(tags){
   const st=(tags['school:type']||'').toLowerCase();
   if(st.includes('public')||st.includes('publica')||st.includes('pública')) return 'Pública';
@@ -987,7 +1060,7 @@ function detectarTipo(tags){
   if(tags.fee==='no')  return 'Pública';
   return 'Desconocida';
 }
-
+ 
 async function cargarColegios(){
   const q=`[out:json][timeout:40];
 area["name"="Rosario"]["admin_level"="8"]->.r;
@@ -1001,7 +1074,7 @@ area["name"="Rosario"]["admin_level"="8"]->.r;
     const data=await resp.json();
     const lg=L.layerGroup();
     let pub=0,priv=0,desc=0;
-
+ 
     const secKeywords=[
       'secundari','secundar','media','bachiller','bachillerato','polimodal','técnica','tecnica',
       'técnico','tecnico','comercial','industrial','agrotécnic','agrotecnic',
@@ -1012,7 +1085,7 @@ area["name"="Rosario"]["admin_level"="8"]->.r;
       'politécnico','politecnico','superior','normal'
     ];
     const excKeywords=['jardin','jardín','primari','inicial','preescolar','infantil','kinder'];
-
+ 
     function esSecundario(tags){
       const sl=(tags['school:level']||tags['isced:level']||tags['education:level']||'').toLowerCase();
       if(sl){
@@ -1028,21 +1101,21 @@ area["name"="Rosario"]["admin_level"="8"]->.r;
       if(st.includes('secondary')||st.includes('media')) return true;
       return true;
     }
-
+ 
     // Deduplicar: clave = coordenadas redondeadas a 4 decimales + nombre
     const vistos = new Set();
-
+ 
     data.elements.forEach(el=>{
       const lat=el.lat||(el.center&&el.center.lat);
       const lng=el.lon||(el.center&&el.center.lon);
       if(!lat||!lng) return;
       if(!esSecundario(el.tags)) return;
-
+ 
       // Clave de deduplicación
       const clave = `${lat.toFixed(4)}_${lng.toFixed(4)}_${(el.tags.name||'').toLowerCase()}`;
       if(vistos.has(clave)) return;
       vistos.add(clave);
-
+ 
       const nombre=el.tags.name||'Escuela s/n';
       const tipo=detectarTipo(el.tags);
       const color=schoolColor(tipo);
@@ -1050,11 +1123,11 @@ area["name"="Rosario"]["admin_level"="8"]->.r;
       if(tipo==='Pública') pub++;
       else if(tipo==='Privada') priv++;
       else desc++;
-
+ 
       // zIndexOffset alto para que el colegio quede encima y su popup no se confunda con el de un club
       const mk=L.marker([lat,lng],{icon:makeSchoolIcon(tipo), zIndexOffset:500});
       mk._tipoColegio=tipo;
-
+ 
       const popupHtml=`<div class="popup-content">
          <h3 style="color:${color}">🎓 ${nombre}</h3>
          ${dir?`<p>📍 ${dir}</p>`:''}
@@ -1066,7 +1139,7 @@ area["name"="Rosario"]["admin_level"="8"]->.r;
       mk.bindPopup(popupHtml, {autoPan:false});
       lg.addLayer(mk);
     });
-
+ 
     colegioLayer=lg;
     const tot=pub+priv+desc;
     document.getElementById('labelColegios').textContent=
@@ -1074,7 +1147,7 @@ area["name"="Rosario"]["admin_level"="8"]->.r;
     return tot;
   }catch(e){ console.warn('Overpass error',e); return 0; }
 }
-
+ 
 window.toggleColegios = async function(){
   const btn=document.getElementById('btnColegios');
   const btnAll=document.getElementById('btnEsc_all');
@@ -1099,7 +1172,7 @@ window.toggleColegios = async function(){
     if(btnPriv) btnPriv.style.display='none';
   }
 };
-
+ 
 window.filtrarEscuelas = function(tipo){
   escFiltroActivo=tipo;
   ['all','Pública','Privada'].forEach(t => {
@@ -1114,7 +1187,7 @@ window.filtrarEscuelas = function(tipo){
     if(!visible&&map.hasLayer(l)) map.removeLayer(l);
   });
 };
-
+ 
 // ── Heatmap ──
 function buildHeat() {
   const pts=[];
@@ -1128,14 +1201,14 @@ function buildHeat() {
     gradient:{0.0:'#ffffb2',0.25:'#fecc5c',0.5:'#fd8d3c',0.75:'#f03b20',1.0:'#bd0026'}});
   if(heatVisible) heatLayer.addTo(map);
 }
-
+ 
 // ── UI ──
 // ══════════════════════════════════════════════════════════════
 // PIN DE USUARIO — click en el mapa
 // ══════════════════════════════════════════════════════════════
 let pingMode    = false;
 const userPins  = [];
-
+ 
 const pinIcon = L.divIcon({
   html:`<div style="position:relative;width:22px;height:22px;">
     <div class="pin-ring"></div>
@@ -1147,7 +1220,7 @@ const pinIcon = L.divIcon({
   </div>`,
   className:'', iconSize:[22,22], iconAnchor:[11,22], popupAnchor:[0,-24]
 });
-
+ 
 window.togglePingMode = function(){
   pingMode = !pingMode;
   const btn = document.getElementById('btnPing');
@@ -1161,21 +1234,21 @@ window.togglePingMode = function(){
     document.body.classList.remove('ping-mode');
   }
 };
-
+ 
 window.borrarPin = function(id){
   const idx = userPins.findIndex(p=>p._pinId===id);
   if(idx===-1) return;
   map.removeLayer(userPins[idx]);
   userPins.splice(idx,1);
 };
-
+ 
 window.borrarTodosPins = function(){
   userPins.forEach(p=>map.removeLayer(p));
   userPins.length=0;
 };
-
+ 
 document.addEventListener('DOMContentLoaded', () => {
-
+ 
   // ── Leyenda ──
   const legend = L.control({position:'bottomright'});
   legend.onAdd = () => {
@@ -1192,6 +1265,8 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="legend-item"><div class="legend-dot" style="background:#0d6efd;border-radius:3px"></div><span>🎓 Sec. Pública (P)</span></div>
       <div class="legend-item"><div class="legend-dot" style="background:#e91e8c;border-radius:3px"></div><span>🎓 Sec. Privada (V)</span></div>
       <div class="legend-item"><div class="legend-dot" style="background:#546e7a;border-radius:3px"></div><span>🎓 Sec. s/dato (?)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#00a650;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,166,80,0.5)"></div><span>🟢 🏡 Argenprop &mdash; Alquiler 4+ dorm.</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ff6000;border-radius:6px;border:2px solid white;box-shadow:0 1px 3px rgba(255,96,0,0.5)"></div><span>🟠 🏠 ZonaProp &mdash; Alquiler 4 dorm.</span></div>
       <div class="legend-item" style="flex-direction:column;align-items:flex-start;gap:3px;">
         <span>🔥 Densidad de clubes</span>
         <div class="heat-bar"></div>
@@ -1199,7 +1274,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return d;
   };
   legend.addTo(map);
-
+ 
   // ── Pin de usuario: click en mapa ──
   map.on('click', function(e){
     if(!pingMode) return;
@@ -1226,7 +1301,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mk.openPopup();
     userPins.push(mk);
   });
-
+ 
   // Badges, heat y zonas se aplican al terminar geocodificarTodos()
   // actualizarBadges();
   // buildHeat();
@@ -1236,7 +1311,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // precalcularZonas(markersAROFUSA);
   // precalcularZonas(markersLIFA);
 });
-
+ 
 window.setLiga = function(liga) {
   ligaActiva = liga;
   document.getElementById('tabARF').className  = 'liga-tab' + (liga==='ARF'    ? ' active-arf'  : '');
@@ -1255,7 +1330,7 @@ window.setLiga = function(liga) {
   aplicarFiltros();
   buildHeat();
 };
-
+ 
 window.setDiv = function(btn, div) {
   divActiva = div;
   document.querySelectorAll('.div-filters .filter-btn').forEach(b => b.classList.remove('active'));
@@ -1263,8 +1338,8 @@ window.setDiv = function(btn, div) {
   aplicarFiltros();
   buildHeat();
 };
-
-
+ 
+ 
 window.toggleHeat = function() {
   const btn = document.getElementById('btnHeat');
   heatVisible = !heatVisible;
@@ -1276,7 +1351,7 @@ window.toggleHeat = function() {
     btn.textContent='🔥 Densidad'; btn.classList.remove('toggle-on');
   }
 };
-
+ 
 // ══════════════════════════════════════════════════════════════
 // ══════════════════════════════════════════════════════════════
 // BUSCADOR — dos campos separados
@@ -1284,10 +1359,10 @@ window.toggleHeat = function() {
 // Campo 2 (📍): geocodificación de dirección → pin + clubes cercanos
 // ══════════════════════════════════════════════════════════════
 (function initSearch() {
-
+ 
   // ── Helpers compartidos ─────────────────────────────────────
   function getTodos() { return [...markersARF, ...markersARDYTI, ...markersAROFUSA, ...markersLIFA]; }
-
+ 
   function badgeColor(c) {
     if (c.liga==='ARDYTI')  return '#e07b20';
     if (c.liga==='AROFUSA') return '#c0392b';
@@ -1325,7 +1400,7 @@ window.toggleHeat = function() {
     const x=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLng/2)**2;
     return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
   }
-
+ 
   // ── Dropdown helpers ─────────────────────────────────────────
   function openDD(ddId, anchorEl) {
     const dd = document.getElementById(ddId);
@@ -1340,7 +1415,7 @@ window.toggleHeat = function() {
     const dd = document.getElementById(ddId);
     if (dd) dd.classList.remove('open');
   }
-
+ 
   // Cerrar dropdowns al hacer click fuera
   document.addEventListener('click', e => {
     const box = document.getElementById('searchBox');
@@ -1351,14 +1426,14 @@ window.toggleHeat = function() {
       if (ddD && !ddD.contains(e.target)) closeDD('ddDir');
     }
   });
-
+ 
   // ══════════════════════════════════════════════════════════════
   // CAMPO 1 — Búsqueda de clubes
   // ══════════════════════════════════════════════════════════════
   let clubResults = [];
   let clubSelIdx  = -1;
   let clubTimer;
-
+ 
   function scoreClub(c, terms) {
     const n = norm(c.nombre), d = norm(c.direccion), l = norm(c.liga+' '+badgeLabel(c));
     let s=0;
@@ -1369,14 +1444,14 @@ window.toggleHeat = function() {
     });
     return s;
   }
-
+ 
   function searchClubs(q) {
     const terms = norm(q).trim().split(/\s+/).filter(Boolean);
     return getTodos()
       .map(m=>({m, s:scoreClub(m._data,terms)}))
       .filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,12).map(x=>x.m);
   }
-
+ 
   function renderClubs(matches, q) {
     const res = document.getElementById('resClub');
     const cnt = document.getElementById('cntClub');
@@ -1397,7 +1472,7 @@ window.toggleHeat = function() {
     }).join('');
     openDD('ddClub', document.getElementById('sfClub'));
   }
-
+ 
   window.clubClick = function(idx) {
     const m = clubResults[idx];
     if (!m) return;
@@ -1416,7 +1491,7 @@ window.toggleHeat = function() {
     const pulse = L.circleMarker([c.lat,c.lng],{radius:18,color:'#f0c040',weight:3,fillOpacity:0,className:'pulse-ring'}).addTo(map);
     setTimeout(()=>{ try { map.removeLayer(pulse); } catch(e){} }, 2500);
   };
-
+ 
   window.clearClubSearch = function() {
     document.getElementById('inputClub').value = '';
     document.getElementById('clearClub').style.display = 'none';
@@ -1424,7 +1499,7 @@ window.toggleHeat = function() {
     clubResults=[]; clubSelIdx=-1;
     document.getElementById('inputClub').focus();
   };
-
+ 
   // Eventos campo club
   const inputClub = document.getElementById('inputClub');
   inputClub.addEventListener('input', e => {
@@ -1450,7 +1525,7 @@ window.toggleHeat = function() {
   inputClub.addEventListener('focus', () => {
     if (inputClub.value.trim() && document.getElementById('resClub').innerHTML) openDD('ddClub', document.getElementById('sfClub'));
   });
-
+ 
   // ══════════════════════════════════════════════════════════════
   // CAMPO 2 — Geocodificación de dirección + pin
   // ══════════════════════════════════════════════════════════════
@@ -1461,7 +1536,7 @@ window.toggleHeat = function() {
   let geoCircle   = null;
   let nearbyMode  = false;
   let nearbyList  = [];
-
+ 
   function normGeoref(s) {
     return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
   }
@@ -1469,7 +1544,7 @@ window.toggleHeat = function() {
     const m = q.match(/^(.+?)\s+(?:y|e|esq\.?|&)\s+(.+)$/i);
     return m ? [m[1].trim(), m[2].trim()] : null;
   }
-
+ 
   async function geocodeGeoref(q) {
     const inter = separarInterseccion(q);
     if (inter) {
@@ -1504,13 +1579,13 @@ window.toggleHeat = function() {
       _fuente: 'georef'
     })).filter(x=>x.lat && x.lon);
   }
-
+ 
   async function geocodeNominatim(q) {
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=ar&city=Rosario&q=${encodeURIComponent(q)}`;
     const r = await fetch(url, {headers:{'Accept-Language':'es'}}).then(r=>r.json());
     return r.map(x=>({...x, _fuente:'osm', _label: x.display_name.split(',')[0]}));
   }
-
+ 
   async function geocode(q) {
     try {
       const res = await geocodeGeoref(q);
@@ -1518,7 +1593,7 @@ window.toggleHeat = function() {
     } catch(e) {}
     try { return await geocodeNominatim(q); } catch(e) { return []; }
   }
-
+ 
   function placePin(lat, lng, label, fuente) {
     if (geoPin)    { map.removeLayer(geoPin); geoPin=null; }
     if (geoCircle) { map.removeLayer(geoCircle); geoCircle=null; }
@@ -1535,7 +1610,7 @@ window.toggleHeat = function() {
       .openPopup();
     geoCircle = L.circle([lat,lng],{radius:400,color:'#e74c3c',weight:1.5,fillOpacity:0.06}).addTo(map);
   }
-
+ 
   function renderGeoResults(results, q) {
     const res = document.getElementById('resDir');
     const cnt = document.getElementById('cntDir');
@@ -1561,7 +1636,7 @@ window.toggleHeat = function() {
     }).join('');
     openDD('ddDir', document.getElementById('sfDir'));
   }
-
+ 
   function renderNearby(lat, lng, label) {
     const res = document.getElementById('resDir');
     const cnt = document.getElementById('cntDir');
@@ -1584,7 +1659,7 @@ window.toggleHeat = function() {
     nearbyMode = true;
     openDD('ddDir', document.getElementById('sfDir'));
   }
-
+ 
   window.dirClick = function(idx) {
     const place = geoResults[idx];
     if (!place) return;
@@ -1594,7 +1669,7 @@ window.toggleHeat = function() {
     map.flyTo([lat,lng], 16, {duration:0.8});
     renderNearby(lat, lng, label);
   };
-
+ 
   window.nearbyClick = function(idx) {
     const m = nearbyList[idx];
     if (!m) return;
@@ -1603,7 +1678,7 @@ window.toggleHeat = function() {
     map.flyTo([c.lat,c.lng], 16, {duration:0.8});
     setTimeout(()=>{ if (map.hasLayer(m)) m.openPopup(); }, 900);
   };
-
+ 
   window.clearDirSearch = function() {
     document.getElementById('inputDir').value = '';
     document.getElementById('clearDir').style.display = 'none';
@@ -1613,7 +1688,7 @@ window.toggleHeat = function() {
     if (geoCircle) { map.removeLayer(geoCircle); geoCircle=null; }
     document.getElementById('inputDir').focus();
   };
-
+ 
   // Eventos campo dirección
   const inputDir = document.getElementById('inputDir');
   inputDir.addEventListener('input', e => {
@@ -1646,7 +1721,7 @@ window.toggleHeat = function() {
   inputDir.addEventListener('focus', () => {
     if (inputDir.value.trim() && document.getElementById('resDir').innerHTML) openDD('ddDir', document.getElementById('sfDir'));
   });
-
+ 
   // ── Evitar propagación al mapa ──────────────────────────────
   ['searchBox','ddClub','ddDir'].forEach(id => {
     const el = document.getElementById(id);
@@ -1656,3 +1731,4 @@ window.toggleHeat = function() {
 </script>
 </body>
 </html>
+ 
