@@ -687,21 +687,7 @@ async function geocodificarTodos() {
   await lote(clubesARDYTI,  crearMarkerARDYTI);
   await lote(clubesAROFUSA, crearMarkerAROFUSA);
   await lote(clubesLIFA,    crearMarkerLIFA);
-  // Aplicar visibilidad inicial y heatmap después de cargar todos
-  precalcularZonas(markersARF);
-  precalcularZonas(markersARDYTI);
-  precalcularZonas(markersAROFUSA);
-  precalcularZonas(markersLIFA);
-  aplicarFiltros();
-  buildHeat();
-}
-
-geocodificarTodos();
-
-// ══════════════════════════════════════════════════════════════
-// 🏠 CASA — Bv. Seguí 1036, Rosario (geocodificado con Georef)
-// ══════════════════════════════════════════════════════════════
-(async function() {
+  // ── 🏠 CASA — Bv. Seguí 1036 ──
   const casaIcon = L.divIcon({
     className: '',
     iconAnchor: [20, 42],
@@ -713,39 +699,108 @@ geocodificarTodos();
       <div style="font-size:2rem;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.45));">🏠</div>
     </div>`
   });
-
-  function addCasaMarker(lat, lng) {
-    L.marker([lat, lng], { icon: casaIcon, zIndexOffset: 1500 })
-      .bindPopup(`
-        <div class="popup-content">
-          <h3 style="color:#f0c040;background:#1a3a6b;margin:-8px -8px 8px;padding:8px 10px;border-radius:6px 6px 0 0;">
-            🏠 Casa
-          </h3>
-          <p>📍 Bv. Seguí 1036, Rosario</p>
-        </div>`, { maxWidth: 220 })
-      .addTo(map);
+  const casaPopup = `
+    <div class="popup-content">
+      <h3 style="color:#f0c040;background:#1a3a6b;margin:-8px -8px 8px;padding:8px 10px;border-radius:6px 6px 0 0;">
+        🏠 Casa
+      </h3>
+      <p>📍 Bv. Seguí 1036, Rosario</p>
+      <a href="https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-bv.-segui-1036-casa-de-4-dorm.-con-cochera-en-58571948.html?n_src=Listado&n_pg=1&n_pos=1"
+        target="_blank"
+        style="display:inline-block;margin-top:6px;background:#e07b20;color:white;
+          font-size:0.7rem;font-weight:700;padding:4px 10px;border-radius:6px;
+          text-decoration:none;">🔗 Ver en ZonaProp</a>
+    </div>`;
+  let casaColocada = false;
+  try {
+    const geoC = await geocodificarDireccion('Boulevard Segui 1036');
+    if (geoC) {
+      L.marker([geoC.lat, geoC.lng], { icon: casaIcon, zIndexOffset: 1500 })
+        .bindPopup(casaPopup, { maxWidth: 240 }).addTo(map);
+      casaColocada = true;
+    }
+  } catch(e) {}
+  if (!casaColocada) {
+    // Fallback Nominatim directo
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ar&q=${encodeURIComponent('Boulevard Segui 1036, Rosario, Santa Fe, Argentina')}`).then(r=>r.json());
+      if (r && r[0]) {
+        L.marker([parseFloat(r[0].lat), parseFloat(r[0].lon)], { icon: casaIcon, zIndexOffset: 1500 })
+          .bindPopup(casaPopup, { maxWidth: 240 }).addTo(map);
+      }
+    } catch(e) {}
   }
 
-  try {
-    const q = 'Boulevard Segui 1036';
-    const url = `https://apis.datos.gob.ar/georef/api/direcciones?provincia=santa+fe&departamento=rosario&max=1&direccion=${encodeURIComponent(q)}`;
-    const data = await fetch(url).then(r => r.json());
-    const d = data.direcciones && data.direcciones[0];
-    if (d && d.ubicacion) {
-      addCasaMarker(d.ubicacion.lat, d.ubicacion.lon);
-      return;
-    }
-  } catch(e) {}
+  // ── 🏘 CASAS ARGENPROP — Alquiler 4+ dorm. Rosario ──
+  const casasArgenprop = [
+    { direccion: "Italia 1100", precio: "$ 2.500.000", features: "90 m² · 5 dorm. · 1 baño", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario-6-ambientes--18699213" },
+    { direccion: "San Martín 3600", precio: "$ 2.000.000", features: "373 m² · 5 dorm. · 4 baños", link: "https://www.argenprop.com/casa-en-alquiler-en-general-jose-de-san-martin-6-ambientes--15911108" },
+    { direccion: "Moreno 300", precio: "$ 1.800.000", features: "195 m² · 5 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-centro--18661561" },
+    { direccion: "Dorrego 1182", precio: "$ 1.600.000", features: "170 m² · 4 dorm. · A Estrenar", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario--19069675" },
+    { direccion: "Génova y J.B.Justo", precio: "USD 1.900", features: "300 m² · 4 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-aldea-8-ambientes--19181387" },
+    { direccion: "Bv. Oroño al 1400", precio: "Consultar precio", features: "640 m² · 7 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-centro--17231044" },
+    { direccion: "Ayolas 1200", precio: "$ 900.000", features: "4 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario--19069675" },
+    { direccion: "Montevideo 3100", precio: "$ 1.100.000", features: "4 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario--18699213" },
+    { direccion: "Bv. Oroño 39", precio: "$ 7.500.000", features: "600 m² · 5 dorm. · 3 baños", link: "https://www.argenprop.com/casa-en-alquiler-en-centro-8-ambientes--17404774" },
+    { direccion: "Oroño al 1500", precio: "USD 5.000", features: "4 dorm. · 3 baños", link: "https://www.argenprop.com/casa-en-alquiler-en-centro--17231044" },
+    { direccion: "Juan Jose Paso al 8700", precio: "USD 2.000", features: "309 m² · 4 dorm. · A Estrenar", link: "https://www.argenprop.com/casa-en-alquiler-en-fisherton-9-ambientes--18365837" },
+    { direccion: "Juan Manuel de Rosas 3289", precio: "$ 1.200.000", features: "145 m² · 4 dorm. · A Estrenar", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario-8-ambientes--18054400" },
+    { direccion: "Córdoba 2836", precio: "$ 1.200.000", features: "120 m² · 5 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-centro-7-ambientes--18881941" },
+    { direccion: "Avenida Carlos Colombres 1100", precio: "$ 1.850.000", features: "4 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario--19069675" },
+    { direccion: "Boulevard Oroño 100", precio: "USD 5.000", features: "600 m² · 4 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario-8-ambientes--19189853" },
+    { direccion: "Dorrego al 2700", precio: "$ 980.000", features: "60 m² · 4 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-barrio-espana-y-hospitales-8-ambientes--19191826" },
+    { direccion: "Av. Pte. Perón al 3700", precio: "$ 1.800.000", features: "378 m² · 5 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario-10-ambientes--19192160" },
+    { direccion: "Oroño al 1500", precio: "$ 7.000.000", features: "465 m² · 5 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario-11-ambientes--19217659" }
+  ];
 
-  // Fallback Nominatim
-  try {
-    const url2 = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ar&city=Rosario&q=${encodeURIComponent('Boulevard Segui 1036, Rosario')}`;
-    const data2 = await fetch(url2).then(r => r.json());
-    if (data2 && data2[0]) {
-      addCasaMarker(parseFloat(data2[0].lat), parseFloat(data2[0].lon));
-    }
-  } catch(e) {}
-})();
+  const argenpropIcon = (dir) => L.divIcon({
+    className: '',
+    iconAnchor: [16, 38],
+    popupAnchor: [0, -38],
+    html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+      <div style="font-size:0.5rem;font-weight:800;background:#00a650;color:white;
+        padding:2px 6px;border-radius:4px;white-space:nowrap;max-width:100px;overflow:hidden;
+        text-overflow:ellipsis;box-shadow:0 1px 3px rgba(0,0,0,0.35);">${dir}</div>
+      <div style="font-size:1.6rem;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));">🏡</div>
+    </div>`
+  });
+
+  for (const casa of casasArgenprop) {
+    try {
+      const geo = await geocodificarDireccion(casa.direccion);
+      if (!geo) continue;
+      const labelCorto = casa.direccion.length > 18 ? casa.direccion.substring(0,17)+'…' : casa.direccion;
+      L.marker([geo.lat, geo.lng], { icon: argenpropIcon(labelCorto), zIndexOffset: 1200 })
+        .bindPopup(`
+          <div class="popup-content">
+            <h3 style="color:white;background:#00a650;margin:-8px -8px 8px;padding:8px 10px;border-radius:6px 6px 0 0;">
+              🏡 Alquiler · Argenprop
+            </h3>
+            <p>📍 ${casa.direccion}</p>
+            <p>💰 ${casa.precio}</p>
+            <p style="font-size:0.72rem;color:#555">${casa.features}</p>
+            <a href="${casa.link}" target="_blank"
+              style="display:inline-block;margin-top:6px;background:#00a650;color:white;
+                font-size:0.7rem;font-weight:700;padding:4px 10px;border-radius:6px;
+                text-decoration:none;">🔗 Ver en Argenprop</a>
+          </div>`, { maxWidth: 260 })
+        .addTo(map);
+    } catch(e) {}
+    await new Promise(r => setTimeout(r, 200));
+  }
+
+  // Aplicar visibilidad inicial y heatmap después de cargar todos
+  precalcularZonas(markersARF);
+  precalcularZonas(markersARDYTI);
+  precalcularZonas(markersAROFUSA);
+  precalcularZonas(markersLIFA);
+  aplicarFiltros();
+  buildHeat();
+}
+
+geocodificarTodos();
+
+
 
 // ── Estado del filtro ──
 let ligaActiva = 'ARF'; // 'ARF' | 'ARDYTI' | 'AROFUSA' | 'LIFA' | 'BOTH'
