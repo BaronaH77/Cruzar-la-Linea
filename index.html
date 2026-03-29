@@ -1,1733 +1,511 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale: 1.0"/>
-  <title>Cruzar la Línea – ARF · ARDYTI · AROFUSA · LIFA</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1a2e; height: 100vh; display: flex; flex-direction: column; }
-    header {
-      background: linear-gradient(135deg, #1a3a6b 0%, #0f2a52 100%);
-      padding: 10px 20px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      border-bottom: 3px solid #f0c040;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    }
-    .header-icon { font-size: 1.8rem; }
-    .header-text h1 { font-size: 1.1rem; font-weight: 700; color: #f0c040; letter-spacing: 1px; }
-    .header-text p { font-size: 0.72rem; color: #a8c8f0; margin-top: 1px; }
-    .header-badges { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-    .header-badge {
-      background: #f0c040; color: #1a3a6b; font-weight: 700;
-      font-size: 0.72rem; padding: 3px 12px; border-radius: 20px; white-space: nowrap;
-    }
-    .header-badge.ard { background: #e07b20; color: white; }
-    .header-badge.afs { background: #c0392b; color: white; }
-    .header-badge.lfa { background: #2e7d32; color: white; }
-    #map { flex: 1; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Av. Pellegrini 9 — Colegios Secundarios Públicos</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',sans-serif; background:#0f1a2e; color:#eee; height:100vh; display:flex; flex-direction:column; }
  
-    /* ── Barra de filtros superior ── */
-    .filter-bar {
-      background: #0f2a52;
-      border-bottom: 2px solid #1a3a6b;
-      display: flex; align-items: stretch;
-      overflow-x: auto; overflow-y: visible;
-      gap: 0;
-      flex-shrink: 0;
-      scrollbar-width: none;
-      position: relative; z-index: 1100;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-    }
-    .filter-bar::-webkit-scrollbar { display: none; }
+  #header {
+    background: linear-gradient(135deg,#0f2a52 0%,#1a3a6b 100%);
+    padding:12px 20px; display:flex; align-items:center; gap:16px;
+    border-bottom:3px solid #ff6000; flex-shrink:0;
+  }
+  #header h1 { font-size:1.05rem; font-weight:800; color:#fff; }
+  #header p  { font-size:0.71rem; color:#aac4e8; margin-top:2px; }
+  .badge { font-size:0.64rem; font-weight:800; padding:3px 11px; border-radius:20px; white-space:nowrap; }
+  #header-right { margin-left:auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
  
-    .filter-group {
-      display: flex; align-items: center; gap: 4px;
-      padding: 5px 10px; flex-shrink: 0;
-      border-right: 1px solid rgba(255,255,255,0.1);
-    }
-    .filter-group:last-child { border-right: none; }
+  #radio-bar {
+    background:#0f2a52; padding:7px 16px; display:flex;
+    align-items:center; gap:8px; border-bottom:1px solid #1e3a60; flex-shrink:0;
+  }
+  #radio-bar label { font-size:0.71rem; color:#aac4e8; font-weight:600; }
+  .rbtn {
+    background:#1a3a6b; border:1px solid #2d5a9e; color:#aac4e8;
+    padding:4px 13px; border-radius:16px; font-size:0.69rem; font-weight:700;
+    cursor:pointer; transition:all 0.15s;
+  }
+  .rbtn:hover,.rbtn.active { background:#7b2fbe; border-color:#9b59b6; color:white; }
+  .rbtn.active { box-shadow:0 0 0 2px rgba(155,89,182,0.35); }
  
-    .filter-group-label {
-      font-size: 0.52rem; font-weight: 700; color: rgba(255,255,255,0.35);
-      letter-spacing: 1px; text-transform: uppercase;
-      writing-mode: horizontal-tb; white-space: nowrap;
-      margin-right: 2px;
-    }
+  #map { flex:1; position:relative; }
  
-    /* Tabs de liga */
-    .liga-tab {
-      padding: 4px 9px; border: 1.5px solid rgba(255,255,255,0.2); border-radius: 20px;
-      font-size: 0.67rem; font-weight: 700; cursor: pointer; white-space: nowrap;
-      transition: all 0.18s; background: transparent; color: rgba(255,255,255,0.55);
-    }
-    .liga-tab:hover { border-color: rgba(255,255,255,0.6); color: white; }
-    .liga-tab.active-arf  { background: #1a6b3a; color: white; border-color: #1a6b3a; }
-    .liga-tab.active-ard  { background: #e07b20; color: white; border-color: #e07b20; }
-    .liga-tab.active-afs  { background: #c0392b; color: white; border-color: #c0392b; }
-    .liga-tab.active-lfa  { background: #2e7d32; color: white; border-color: #2e7d32; }
-    .liga-tab.active-both { background: #f0c040; color: #1a3a6b; border-color: #f0c040; }
+  #legend {
+    position:absolute; bottom:24px; right:12px;
+    background:rgba(10,25,50,0.93); border:1px solid #2d5a9e;
+    border-radius:10px; padding:13px 15px; z-index:1000;
+    min-width:196px; font-size:0.7rem; backdrop-filter:blur(4px);
+  }
+  #legend h4 { color:#aad4f0; font-size:0.68rem; margin-bottom:8px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; }
+  .leg-item { display:flex; align-items:center; gap:8px; margin-bottom:6px; color:#cde; }
+  .leg-dot { width:14px; height:14px; border-radius:50%; flex-shrink:0; border:2px solid rgba(255,255,255,0.3); }
  
-    /* Botones de división, colegios, etc */
-    .filter-btn {
-      background: transparent; border: 1.5px solid rgba(255,255,255,0.2); border-radius: 20px;
-      padding: 3px 9px; font-size: 0.63rem; font-weight: 600; cursor: pointer;
-      transition: all 0.18s; color: rgba(255,255,255,0.55); white-space: nowrap;
-    }
-    .filter-btn:hover { border-color: rgba(255,255,255,0.6); color: white; }
-    .filter-btn.active[data-div="all"]  { background:#e0e0e0; color:#222; border-color:#e0e0e0; }
-    .filter-btn.active[data-div="A"]    { background:#1a6b3a; color:white; border-color:#1a6b3a; }
-    .filter-btn.active[data-div="B"]    { background:#2980b9; color:white; border-color:#2980b9; }
-    .filter-btn.active[data-div="C"]    { background:#8e44ad; color:white; border-color:#8e44ad; }
-    .filter-btn.active.toggle-on        { background:#e74c3c; color:white; border-color:#e74c3c; }
-    #btnEsc_all.active    { background:#e0e0e0; color:#222; border-color:#e0e0e0; }
-    #btnEsc_Pública.active { background:#0d6efd; color:white; border-color:#0d6efd; }
-    #btnEsc_Privada.active { background:#e91e8c; color:white; border-color:#e91e8c; }
+  #stats {
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    background:rgba(10,25,50,0.9); border:1px solid #2d5a9e; border-radius:20px;
+    padding:5px 18px; z-index:1000; font-size:0.69rem; color:#d9a3f5;
+    backdrop-filter:blur(4px); white-space:nowrap;
+  }
  
-    /* Grilla de zonas en la barra */
-    .zona-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2px;
-    }
-    .zona-btn {
-      padding: 3px 4px; border: 1.5px solid rgba(255,255,255,0.18); border-radius: 5px;
-      font-size: 0.55rem; font-weight: 700; cursor: pointer; text-align: center;
-      background: transparent; color: rgba(255,255,255,0.45); transition: all 0.15s;
-      line-height: 1.2; white-space: nowrap;
-    }
-    .zona-btn:hover { border-color: rgba(255,255,255,0.6); color: white; }
-    .zona-btn.active { background: #1a3a6b; color: white; border-color: #4a7abf; }
-    .zona-btn.centro { background: rgba(240,192,64,0.15); color: #f0c040; border-color: rgba(240,192,64,0.4); }
-    .zona-btn.centro.active { background: #f0c040; color: #1a3a6b; border-color: #f0c040; }
-    #labelZona { font-size:0.58rem; color:rgba(255,255,255,0.45); white-space:nowrap; padding-left:4px; }
-    #labelColegios { font-size:0.55rem; color:rgba(255,255,255,0.4); white-space:nowrap; max-width:90px; line-height:1.3; }
+  .leaflet-popup-content-wrapper {
+    background:#0f2a52; border:1px solid #2d5a9e;
+    border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.6);
+  }
+  .leaflet-popup-tip { background:#0f2a52; }
+  .leaflet-popup-content { margin:8px; color:#dde; font-size:0.78rem; }
+  .popup-content h3 {
+    font-size:0.82rem; font-weight:800;
+    margin:-8px -8px 8px; padding:8px 10px;
+    border-radius:6px 6px 0 0; color:white;
+  }
+  .popup-content p { margin:4px 0; line-height:1.45; }
+  .popup-btn {
+    display:inline-block; margin-top:7px; color:white;
+    font-size:0.68rem; font-weight:700; padding:4px 11px;
+    border-radius:6px; text-decoration:none;
+  }
  
-    .bar-divider { width:1px; background:rgba(255,255,255,0.1); align-self:stretch; flex-shrink:0; }
-    .separator { display:none; } /* ya no se usa */
+  #loading {
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    background:rgba(10,25,50,0.93); border:1px solid #2d5a9e;
+    border-radius:12px; padding:22px 36px; z-index:2000;
+    text-align:center; color:#aad4f0; font-size:0.82rem;
+  }
+  .spinner {
+    width:30px; height:30px; border:3px solid #1a3a6b;
+    border-top-color:#9b59b6; border-radius:50%;
+    animation:spin 0.75s linear infinite; margin:0 auto 10px;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
  
-    /* ── Pin de usuario ── */
-    .ping-mode #map { cursor: crosshair !important; }
-    @keyframes pingPulse {
-      0%   { transform: scale(1);   opacity:1; }
-      70%  { transform: scale(2.5); opacity:0; }
-      100% { transform: scale(2.5); opacity:0; }
-    }
-    .pin-ring {
-      position:absolute; width:28px; height:28px; border-radius:50%;
-      border: 3px solid #e74c3c; top:-3px; left:-3px;
-      animation: pingPulse 1.4s ease-out infinite;
-    }
- 
-    /* ── Popups ── */
-    .leaflet-popup-content-wrapper {
-      background:#fff; border:1px solid #ddd; border-radius:12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    }
-    .leaflet-popup-tip { background:#fff; }
-    .popup-content { text-align:center; padding:4px; min-width:170px; }
-    .popup-content img { width:56px; height:56px; object-fit:contain; margin-bottom:5px; }
-    .popup-content h3 { font-size:0.86rem; font-weight:700; margin-bottom:2px; }
-    .popup-content p  { font-size:0.68rem; color:#444; line-height:1.5; margin:1px 0; }
-    .popup-badge {
-      display:inline-block; border-radius:20px;
-      padding:2px 10px; font-size:0.62rem; margin-top:4px;
-      font-weight:700; color:white;
-    }
-    .badge-A   { background:#1a6b3a; }
-    .badge-B   { background:#2980b9; }
-    .badge-C   { background:#8e44ad; }
-    .badge-ard { background:#e07b20; }
-    .badge-lfa { background:#2e7d32; }
- 
-    /* ── Buscador en barra ── */
-    /* ── Buscadores (dos campos apilados verticalmente) ── */
-    .search-group {
-      display: flex; flex-direction: column; justify-content: center; gap: 3px;
-      padding: 4px 10px; flex-shrink: 0; margin-left: auto;
-      border-left: 1px solid rgba(255,255,255,0.1);
-    }
-    .search-field {
-      display: flex; align-items: center;
-      background: rgba(255,255,255,0.1);
-      border: 1.5px solid rgba(255,255,255,0.2);
-      border-radius: 20px; overflow: hidden;
-      transition: border-color 0.2s, background 0.2s;
-    }
-    .search-field:focus-within {
-      border-color: #f0c040; background: rgba(255,255,255,0.15);
-    }
-    .search-field-icon {
-      padding: 0 5px 0 8px; font-size: 0.75rem;
-      color: rgba(255,255,255,0.45); flex-shrink: 0; line-height: 1;
-      pointer-events: none;
-    }
-    .search-field:focus-within .search-field-icon { color: #f0c040; }
-    .search-input {
-      width: 170px; padding: 4px 2px 4px 0;
-      border: none; outline: none;
-      font-size: 0.68rem; font-family: 'Segoe UI', sans-serif;
-      background: transparent; color: white;
-      transition: width 0.2s;
-    }
-    .search-input::placeholder { color: rgba(255,255,255,0.38); }
-    .search-input:focus { width: 210px; }
-    .search-clear {
-      padding: 0 8px 0 2px; cursor: pointer;
-      color: rgba(255,255,255,0.4); font-size: 0.78rem;
-      background: none; border: none; line-height: 1; display: none; flex-shrink: 0;
-    }
-    .search-clear:hover { color: white; }
-    /* Dropdowns — position:fixed para escapar del overflow:auto del filter-bar */
-    .search-dropdown {
-      position: fixed; background: white; border-radius: 10px;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.22); z-index: 9999; display: none;
-      width: 290px;
-    }
-    .search-dropdown.open { display: block; }
-    .search-results { max-height: 260px; overflow-y: auto; }
-    .search-result-item {
-      padding: 7px 10px; cursor: pointer; font-size: 0.7rem;
-      transition: background 0.12s; border-bottom: 1px solid #f0f0f0;
-    }
-    .search-result-item:last-child { border-bottom: none; }
-    .search-result-item:hover, .search-result-item.highlighted { background: #f0f6ff; }
-    .sri-nombre { font-weight: 700; color: #1a1a2e; }
-    .sri-dir    { color: #666; margin-top: 1px; font-size: 0.65rem; }
-    .sri-badge  { display:inline-block; border-radius:10px; padding:1px 7px;
-      font-size:0.58rem; font-weight:700; color:white; margin-top:3px; }
-    .search-empty { font-size:0.7rem; color:#aaa; text-align:center; padding:12px 6px; line-height:1.5; }
-    .search-count { font-size:0.6rem; color:#aaa; padding: 4px 10px 6px;
-      text-align:right; border-top: 1px solid #f0f0f0; }
- 
-    /* ── Leyenda ── */
-    .legend {
-      position:absolute; bottom:30px; right:10px; z-index:1000;
-      background:white; border-radius:10px; padding:10px 14px;
-      box-shadow:0 2px 10px rgba(0,0,0,0.15); font-size:0.67rem;
-      min-width:170px;
-    }
-    .legend h4 { font-size:0.65rem; font-weight:700; color:#888;
-      text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
-    .legend-item { display:flex; align-items:center; gap:7px; margin:4px 0; }
-    .legend-dot { width:13px; height:13px; border-radius:50%; flex-shrink:0; }
-    .heat-bar {
-      height:8px; width:100%; border-radius:4px; margin-top:6px;
-      background: linear-gradient(to right,#ffffb2,#fecc5c,#fd8d3c,#f03b20,#bd0026);
-    }
-  </style>
+  .leaflet-tooltip {
+    background:rgba(10,25,50,0.9); border:1px solid #2d5a9e;
+    color:#dde; font-size:0.64rem; border-radius:6px; padding:3px 8px;
+  }
+  .leaflet-tooltip::before { border-top-color:#2d5a9e; }
+</style>
 </head>
 <body>
-<header>
-  <div class="header-icon">⚽</div>
-  <div class="header-text">
-    <h1>CRUZAR LA LÍNEA</h1>
-    <p>ARF · ARDYTI · AROFUSA · LIFA — Rosario y Gran Rosario, Santa Fe, Argentina</p>
-    <p style="color:#f0c040;font-weight:700;font-size:0.78rem;margin-top:1px;">Proyecto Casa Deportiva</p>
-  </div>
-  <div class="header-badges">
-    <div class="header-badge" id="badgeARF">47 clubes ARF</div>
-    <div class="header-badge ard" id="badgeARD">27 clubes ARDYTI</div>
-    <div class="header-badge afs" id="badgeAFS">30 clubes AROFUSA</div>
-    <div class="header-badge lfa" id="badgeLFA">15 clubes LIFA</div>
-  </div>
-</header>
  
-<!-- ── Barra de filtros superior ── -->
-<div class="filter-bar" id="filterBar">
- 
-  <!-- Liga -->
-  <div class="filter-group">
-    <span class="filter-group-label">Liga</span>
-    <div class="liga-tab active-arf" id="tabARF"  onclick="setLiga('ARF')">ARF</div>
-    <div class="liga-tab" id="tabARD"             onclick="setLiga('ARDYTI')">ARDYTI</div>
-    <div class="liga-tab" id="tabAFS"             onclick="setLiga('AROFUSA')" style="border-color:#c0392b;color:#c0392b;">AROFUSA</div>
-    <div class="liga-tab" id="tabLFA"             onclick="setLiga('LIFA')"    style="border-color:#2e7d32;color:#2e7d32;">LIFA</div>
-    <div class="liga-tab" id="tabBOTH"            onclick="setLiga('BOTH')">Todas</div>
+<div id="header">
+  <div>
+    <h1>🏠 Av. Pellegrini 9 &mdash; Colegios &amp; Clubes de Fútbol</h1>
+    <p>Distrito Sur · Zona Parque Urquiza · Rosario, Santa Fe</p>
   </div>
- 
-  <!-- División ARF -->
-  <div class="filter-group" id="divFilterRow">
-    <span class="filter-group-label">División</span>
-    <button class="filter-btn active" data-div="all" onclick="setDiv(this,'all')">Todas</button>
-    <button class="filter-btn" data-div="A" onclick="setDiv(this,'A')">🟢 1ª A</button>
-    <button class="filter-btn" data-div="B" onclick="setDiv(this,'B')">🔵 1ª B</button>
-    <button class="filter-btn" data-div="C" onclick="setDiv(this,'C')">🟣 1ª C</button>
+  <div id="header-right">
+    <span class="badge" style="background:#ff6000;color:white;">🟠 ZonaProp · $1.900.000/mes</span>
+    <span class="badge" id="badge-radio" style="background:#1a3a6b;color:#aad4f0;">Radio 800m</span>
+    <span class="badge" id="badge-cnt" style="background:#4a1060;color:#d9a3f5;">buscando…</span>
+    <span class="badge" id="badge-clubs" style="background:#0d4a1a;color:#57e87a;">buscando…</span>
   </div>
- 
-  <!-- Zona -->
-  <div class="filter-group">
-    <span class="filter-group-label">Zona</span>
-    <div class="zona-grid" id="zonaGrid" style="width:96px;">
-      <div class="zona-btn" id="zNO" onclick="setZona('NO')">↖NO</div>
-      <div class="zona-btn" id="zN"  onclick="setZona('N')">↑N</div>
-      <div class="zona-btn" id="zNE" onclick="setZona('NE')">↗NE</div>
-      <div class="zona-btn" id="zO"  onclick="setZona('O')">←O</div>
-      <div class="zona-btn centro active" id="zTODAS" onclick="setZona('TODAS')">✦</div>
-      <div class="zona-btn" id="zE"  onclick="setZona('E')">E→</div>
-      <div class="zona-btn" id="zSO" onclick="setZona('SO')">↙SO</div>
-      <div class="zona-btn" id="zS"  onclick="setZona('S')">↓S</div>
-      <div class="zona-btn" id="zSE" onclick="setZona('SE')">↘SE</div>
-    </div>
-    <div id="labelZona"></div>
-  </div>
- 
-  <!-- Colegios -->
-  <div class="filter-group">
-    <span class="filter-group-label">Colegios</span>
-    <button class="filter-btn" id="btnColegios" onclick="toggleColegios()">🎓 Sec.</button>
-    <button class="filter-btn active" id="btnEsc_all"     onclick="filtrarEscuelas('all')"     style="display:none">Todos</button>
-    <button class="filter-btn"        id="btnEsc_Pública"  onclick="filtrarEscuelas('Pública')" style="display:none;border-color:#4a8fef;color:#4a8fef">🔵 Púb.</button>
-    <button class="filter-btn"        id="btnEsc_Privada"  onclick="filtrarEscuelas('Privada')" style="display:none;border-color:#e91e8c;color:#e91e8c">🩷 Priv.</button>
-    <div id="labelColegios"></div>
-  </div>
- 
-  <!-- Herramientas -->
-  <div class="filter-group">
-    <span class="filter-group-label">Herr.</span>
-    <button class="filter-btn" id="btnPing" onclick="togglePingMode()">📍 Pin</button>
-    <button class="filter-btn" id="btnHeat" onclick="toggleHeat()">🔥 Densidad</button>
-  </div>
- 
-  <!-- Buscadores: club + dirección (apilados verticalmente) -->
-  <div class="search-group" id="searchBox">
-    <!-- Campo 1: buscar club -->
-    <div class="search-field" id="sfClub">
-      <span class="search-field-icon">⚽</span>
-      <input class="search-input" id="inputClub" type="text"
-        placeholder="Buscar club…" autocomplete="off" spellcheck="false" />
-      <button class="search-clear" id="clearClub" onclick="clearClubSearch()">✕</button>
-    </div>
-    <!-- Campo 2: buscar dirección y poner pin -->
-    <div class="search-field" id="sfDir">
-      <span class="search-field-icon">📍</span>
-      <input class="search-input" id="inputDir" type="text"
-        placeholder="Dirección o intersección…" autocomplete="off" spellcheck="false" />
-      <button class="search-clear" id="clearDir" onclick="clearDirSearch()">✕</button>
-    </div>
-  </div>
- 
 </div>
  
-<div id="map"></div>
- 
-<!-- Dropdowns — fuera del filter-bar para evitar overflow:auto que los recorta -->
-<div class="search-dropdown" id="ddClub">
-  <div class="search-results" id="resClub"></div>
-  <div class="search-count"   id="cntClub"></div>
+<div id="radio-bar">
+  <label>📏 Radio de búsqueda:</label>
+  <button class="rbtn" data-r="400">400m</button>
+  <button class="rbtn active" data-r="800">800m</button>
+  <button class="rbtn" data-r="1200">1.2km</button>
+  <button class="rbtn" data-r="2000">2km</button>
 </div>
-<div class="search-dropdown" id="ddDir">
-  <div class="search-results" id="resDir"></div>
-  <div class="search-count"   id="cntDir"></div>
+ 
+<div id="map">
+  <div id="loading">
+    <div class="spinner"></div>
+    Buscando colegios y clubes de fútbol…
+  </div>
+ 
+  <div id="stats">
+    🎓 <span id="stats-sec">buscando…</span>
+    &nbsp;·&nbsp;
+    ⚽ <span id="stats-clubs">buscando…</span>
+  </div>
+ 
+  <div id="legend">
+    <h4>Referencias</h4>
+    <div class="leg-item">
+      <div style="width:22px;height:22px;background:#ff6000;border-radius:6px;border:2px solid white;
+        display:flex;align-items:center;justify-content:center;font-size:0.95rem;flex-shrink:0;">🏠</div>
+      <span><b>Av. Pellegrini 9</b><br><span style="color:#888;font-size:0.63rem;">Casa en alquiler</span></span>
+    </div>
+    <div style="border-top:1px solid #2d5a9e;margin:9px 0;"></div>
+    <h4>Sec. Públicos</h4>
+    <div class="leg-item">
+      <div class="leg-dot" style="background:#9b59b6;"></div>
+      <span>Escuela secundaria</span>
+    </div>
+    <div class="leg-item">
+      <div class="leg-dot" style="background:#e040fb;"></div>
+      <span>Instituto / Bachiller</span>
+    </div>
+    <div style="border-top:1px solid #2d5a9e;margin:9px 0;"></div>
+    <h4>Clubes de Fútbol</h4>
+    <div class="leg-item">
+      <div class="leg-dot" style="background:#1db954;"></div>
+      <span>Club con cancha</span>
+    </div>
+    <div class="leg-item">
+      <div class="leg-dot" style="background:#57e87a;border:2px solid #1db954;"></div>
+      <span>Asociación / Club</span>
+    </div>
+    <div style="border-top:1px solid #2d5a9e;margin:9px 0;"></div>
+    <div style="color:#555;font-size:0.61rem;line-height:1.5;">
+      Fuente: OpenStreetMap<br>
+      Click en cada punto para detalle
+    </div>
+  </div>
 </div>
  
 <script>
-const map = L.map('map', { center:[-32.960,-60.660], zoom:13 });
+const map = L.map('map', { zoomControl:true });
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution:'&copy; OpenStreetMap &copy; CARTO', subdomains:'abcd', maxZoom:19
+  attribution:'© OpenStreetMap © CartoDB', maxZoom:19
 }).addTo(map);
  
-// ══════════════════════════════════════════════════════════════
-// DATOS – ARF (Asociación Rosarina de Fútbol)
-// liga: "ARF" | div: "A" | "B" | "C"
-// ✔ = dirección confirmada  ⚠ = estimada por zona
-// ══════════════════════════════════════════════════════════════
-const clubesARF = [
-  // ── Primera A – Copa Gobernador Molinas ──
-  { nombre:"Newell's Old Boys",   div:"A", fundacion:1903, liga:"ARF", direccion:"Parque Independencia – Estadio Coloso Marcelo Bielsa",              lat:-32.9538, lng:-60.6612 }, // ✔
-  { nombre:"Rosario Central",     div:"A", fundacion:1889, liga:"ARF", direccion:"Sede: Mitre 853 / Estadio Gigante de Arroyito: Bv. Avellaneda y Av. Génova", lat:-32.9139, lng:-60.6746 }, // ✔
-  { nombre:"Tiro Federal",        div:"A", fundacion:1905, liga:"ARF", direccion:"Estadio El Fortín: Casilda y Matienzo (esq. Av. Circunvalación)",   lat:-32.9287, lng:-60.6954 }, // ✔
-  { nombre:"Provincial",          div:"A", fundacion:1903, liga:"ARF", direccion:"Sede: Bv. 27 de Febrero 2672 / Country: Jorge Cura y Pueyrredón",   lat:-32.9636, lng:-60.6647 }, // ✔
-  { nombre:"Central Córdoba",     div:"A", fundacion:1906, liga:"ARF", direccion:"Sede: San Martín 3250 / Estadio Gabino Sosa: Juan M. de Rosas y Virasoro", lat:-32.9780, lng:-60.6465 }, // ✔
-  { nombre:"Belgrano",            div:"A", fundacion:1905, liga:"ARF", direccion:"Sede: Italia esq. Rueda (sin cancha de fútbol activa)",              lat:-32.9698, lng:-60.6495 }, // ✔
-  { nombre:"Coronel Aguirre",     div:"A", fundacion:1924, liga:"ARF", direccion:"Sede y Cancha: Soldado Aguirre y Buenos Aires, V. G. Gálvez",        lat:-33.0247, lng:-60.6276 }, // ✔
-  { nombre:"Adiur",               div:"A", fundacion:1980, liga:"ARF", direccion:"Sede y Cancha: Av. Alberdi 30 bis (esq. Av. de la Travesía)",        lat:-32.9297, lng:-60.7068 }, // ✔
-  { nombre:"Morning Star",        div:"A", fundacion:1942, liga:"ARF", direccion:"Sede: Bv. Avellaneda 566 / Predio: Av. Bordabehere 4200 (esq. Valparaíso)", lat:-32.9335, lng:-60.7002 }, // ✔
-  { nombre:"Pablo VI",            div:"A", fundacion:1963, liga:"ARF", direccion:"Sede y Cancha: Bv. Seguí y Garzón (Crespo 1623)",                    lat:-32.9565, lng:-60.7108 }, // ✔
-  { nombre:"Río Negro",           div:"A", fundacion:1939, liga:"ARF", direccion:"Sede: Forest 6251 / Predio: Av. Pellegrini entre Barra y Campbell",  lat:-32.9582, lng:-60.7160 }, // ✔
-  { nombre:"Oriental",            div:"A", fundacion:1940, liga:"ARF", direccion:"Sede y Predio: Buenos Aires 5819",                                   lat:-32.9988, lng:-60.6626 }, // ✔
-  { nombre:"Renato Cesarini",     div:"A", fundacion:1975, liga:"ARF", direccion:"Sede: San Martín 3924 / Cancha: zona Tablada",                       lat:-32.9808, lng:-60.6556 }, // ✔
-  { nombre:"Mitre",               div:"A", fundacion:1925, liga:"ARF", direccion:"Complejo Deportivo: Av. Sarmiento s/n, Pérez",                       lat:-32.9846, lng:-60.7628 }, // ✔
-  { nombre:"Unión de Alvarez",    div:"A", fundacion:1921, liga:"ARF", direccion:"Estadio Ángel Moscoloni: Chacabuco y Saavedra, Álvarez",              lat:-33.0528, lng:-60.6021 }, // ✔
-  { nombre:"Banco Nación",        div:"A", fundacion:1949, liga:"ARF", direccion:"Sede: Warnes 2855 / Cancha: Bv. Rondeau 2932",                       lat:-32.9490, lng:-60.6720 }, // ✔
-  // ── Primera B – Copa Santiago Pinasco ──
-  { nombre:"General Paz",         div:"B", fundacion:1912, liga:"ARF", direccion:"Av. Circunvalación y Nogués",                                        lat:-32.9575, lng:-60.6395 }, // ✔
-  { nombre:"Defensores Unidos",   div:"B", fundacion:1986, liga:"ARF", direccion:"Humberto Primo 1701 (esq. Iguazú)",                                  lat:-32.9672, lng:-60.7018 }, // ✔
-  { nombre:"Social Lux",          div:"B", fundacion:1940, liga:"ARF", direccion:"Pascual Rosas 403",                                                  lat:-32.9435, lng:-60.6582 }, // ✔
-  { nombre:"Bancario",            div:"B", fundacion:1963, liga:"ARF", direccion:"Sede: Av. Colombres 1610 / Cancha: Chacabuco 480, Gob. Baigorria",   lat:-32.9488, lng:-60.6422 }, // ✔
-  { nombre:"Sportsmen Unidos",    div:"B", fundacion:1897, liga:"ARF", direccion:"1º de Mayo 2143 (Barrio La Sexta)",                                  lat:-32.9638, lng:-60.6338 }, // ✔
-  { nombre:"Tiro Suizo",          div:"B", fundacion:1889, liga:"ARF", direccion:"Sede: Cortada Raffo 5120 / Cancha alt.: Corrientes y Lamadrid",      lat:-32.9510, lng:-60.6375 }, // ✔
-  { nombre:"Arijón",              div:"B", fundacion:1985, liga:"ARF", direccion:"Arijón 350 bis (zona norte)",                                        lat:-32.9135, lng:-60.6685 }, // ✔
-  { nombre:"Fisherton",           div:"B", fundacion:1915, liga:"ARF", direccion:"Muiño 9156 (Barrio Fisherton)",                                      lat:-32.9353, lng:-60.7395 }, // ✔
-  { nombre:"7 de Setiembre",      div:"B", fundacion:1985, liga:"ARF", direccion:"Martínez Estrada 8062",                                              lat:-32.9878, lng:-60.7312 }, // ✔
-  { nombre:"Defensores de Funes", div:"B", fundacion:2015, liga:"ARF", direccion:"Funes, Gran Rosario",                                                lat:-32.9167, lng:-60.8158 }, // ⚠
-  { nombre:"Club del Gran Rosario",div:"B",fundacion:2018, liga:"ARF", direccion:"Hipólito Irigoyen s/n, Funes",                                       lat:-32.9208, lng:-60.8092 }, // ✔
-  { nombre:"Leones",              div:"B", fundacion:1979, liga:"ARF", direccion:"Barrio Las Flores, zona oeste",                                      lat:-32.9750, lng:-60.7050 }, // ⚠
-  { nombre:"Alianza Sport",       div:"B", fundacion:1963, liga:"ARF", direccion:"Gutiérrez 2065 (zona Saladillo, sur)",                               lat:-33.0048, lng:-60.6441 }, // ✔
-  { nombre:"Juan XXIII",          div:"B", fundacion:1963, liga:"ARF", direccion:"Av. Pellegrini entre Valparaíso y Lima (zona oeste)",                lat:-32.9668, lng:-60.7070 }, // ✔
-  { nombre:"Villa Gdor. Gálvez",  div:"B", fundacion:1932, liga:"ARF", direccion:"Villa Gobernador Gálvez",                                            lat:-33.0300, lng:-60.6400 }, // ⚠
-  { nombre:"El Torito",           div:"B", fundacion:1974, liga:"ARF", direccion:"Zona norte-oeste, Rosario",                                          lat:-32.9500, lng:-60.7100 }, // ⚠
-  // ── Primera C – Copa Mariano Reyna ──
-  { nombre:"Argentino",           div:"C", fundacion:1912, liga:"ARF", direccion:"Estadio: Víctor Mercante 750",                                       lat:-32.9555, lng:-60.6893 }, // ✔
-  { nombre:"Deportivo Rosario",   div:"C", fundacion:1906, liga:"ARF", direccion:"Copahue 6301 (Laprida 6300) / Salta y Viaducto Avellaneda",          lat:-32.9937, lng:-60.6688 }, // ✔ deportivorosario.es.tl
-  { nombre:"Regatas Rosario",     div:"C", fundacion:1917, liga:"ARF", direccion:"Cordiviola 1268",                                                    lat:-32.9049, lng:-60.6478 }, // ✔
-  { nombre:"Rowing",              div:"C", fundacion:1887, liga:"ARF", direccion:"Barrio Alberdi, sobre el río Paraná",                                lat:-32.9048, lng:-60.6530 }, // ✔
-  { nombre:"Talleres R.P.B.",     div:"C", fundacion:1920, liga:"ARF", direccion:"Juan Domingo Perón 1790, V. G. Gálvez",                              lat:-33.0213, lng:-60.6214 }, // ✔
-  { nombre:"Náutico Avellaneda",  div:"C", fundacion:1931, liga:"ARF", direccion:"Pedro Tuella 952",                                                   lat:-32.9042, lng:-60.6592 }, // ✔
-  { nombre:"Remeros Alberdi",     div:"C", fundacion:1919, liga:"ARF", direccion:"Puccio y Costanera, Alberdi",                                        lat:-32.8978, lng:-60.6695 }, // ✔
-  { nombre:"Sagrado Corazón",     div:"C", fundacion:1939, liga:"ARF", direccion:"Sede: Moreno 1250 / Filial: Av. Pellegrini y Vera Mújica",           lat:-32.9710, lng:-60.6640 }, // ✔
-  { nombre:"Libertad",            div:"C", fundacion:1920, liga:"ARF", direccion:"Riobamba al 5900 (esq. Solís), Parque Oeste",                        lat:-32.9765, lng:-60.7180 }, // ✔
-  { nombre:"Horizonte",           div:"C", fundacion:1928, liga:"ARF", direccion:"Suipacha 1363",                                                      lat:-32.9483, lng:-60.6828 }, // ✔
-  { nombre:"Unión Central",       div:"C", fundacion:1946, liga:"ARF", direccion:"Junín 1548",                                                         lat:-32.9548, lng:-60.6651 }, // ✔
-  { nombre:"Nueva Aurora",        div:"C", fundacion:1933, liga:"ARF", direccion:"Zona este, Rosario",                                                 lat:-32.9600, lng:-60.6300 }, // ⚠
-  { nombre:"Federal",             div:"C", fundacion:1943, liga:"ARF", direccion:"Zona sur, Rosario",                                                  lat:-33.0080, lng:-60.6750 }, // ⚠
-  { nombre:"El Luchador",         div:"C", fundacion:1986, liga:"ARF", direccion:"Zona oeste, Rosario",                                                lat:-32.9750, lng:-60.7150 }, // ⚠
-  { nombre:"Parquefield",         div:"C", fundacion:1966, liga:"ARF", direccion:"Barrio Parque, Rosario",                                             lat:-32.9380, lng:-60.6980 }, // ⚠
-  { nombre:"Echesortu F.C.",      div:"C", fundacion:1933, liga:"ARF", direccion:"Oroño al 770",                                                       lat:-32.9510, lng:-60.6560 }, // ✔
-  { nombre:"Jockey Club",         div:"C", fundacion:1900, liga:"ARF", direccion:"Eva Perón esq. Wilde (Jockey Club de Rosario)",                      lat:-32.9345, lng:-60.6412 }, // ✔
-  { nombre:"Unión Americana",     div:"C", fundacion:1941, liga:"ARF", direccion:"Predio: Tupac Amarú y Colombia",                                     lat:-32.9268, lng:-60.7358 }, // ✔ rosariofutbol.com
-  { nombre:"Club Teléfonos",      div:"C", fundacion:1939, liga:"ARF", direccion:"Brassey 7801 (Barrio Empalme Graneros)",                             lat:-32.9298, lng:-60.7358 }, // ✔
-  { nombre:"Universitario",       div:"C", fundacion:1924, liga:"ARF", direccion:"Sede: Buchanan 551 / Campo: Av. del Huerto 1051",                    lat:-32.9422, lng:-60.6651 }, // ✔
-  { nombre:"Marista",             div:"C", fundacion:1924, liga:"ARF", direccion:"Av. del Huerto 1051",                                                lat:-32.9422, lng:-60.6580 }, // ✔
-  { nombre:"Argentino Sirio",     div:"C", fundacion:1946, liga:"ARF", direccion:"San Nicolás al 1250",                                                lat:-32.9460, lng:-60.6430 }, // ✔
-  { nombre:"1º de Mayo",          div:"C", fundacion:1979, liga:"ARF", direccion:"Av. Kennedy y Gianneo (Barrio 1º de Mayo)",                          lat:-32.9198, lng:-60.6995 }, // ✔
-  { nombre:"Suderland",           div:"C", fundacion:1930, liga:"ARF", direccion:"Zona noroeste, Rosario",                                             lat:-32.9400, lng:-60.7100 }, // ⚠
-  { nombre:"María Madre",         div:"C", fundacion:2016, liga:"ARF", direccion:"Cancha: Presidente Quintana 1577",                                   lat:-32.9488, lng:-60.6975 }, // ✔ Instagram
-  { nombre:"Unión Sionista ARF",  div:"C", fundacion:1983, liga:"ARF", direccion:"Salta 2555",                                                         lat:-32.9567, lng:-60.6443 }, // ✔
-  { nombre:"Olympia",             div:"C", fundacion:1924, liga:"ARF", direccion:"Barrio Empalme Graneros, noroeste",                                  lat:-32.9320, lng:-60.7178 }, // ⚠
-  { nombre:"Internacional",       div:"C", fundacion:1963, liga:"ARF", direccion:"San Diego s/n, V. G. Gálvez",                                        lat:-33.0350, lng:-60.6350 }, // ⚠
-  { nombre:"Reflejos",            div:"C", fundacion:1980, liga:"ARF", direccion:"Zona sur, Rosario",                                                  lat:-33.0130, lng:-60.6600 }, // ⚠
-  { nombre:"Barrio Rucci",        div:"C", fundacion:1979, liga:"ARF", direccion:"Zona oeste, Rosario",                                                lat:-32.9880, lng:-60.7050 }, // ⚠
-  { nombre:"Rosario Athletic",    div:"C", fundacion:1867, liga:"ARF", direccion:"Pasaje Gould 865",                                                   lat:-32.9488, lng:-60.6583 }, // ✔
-  { nombre:"Sportivo Maciel",     div:"C", fundacion:1944, liga:"ARF", direccion:"Puerto General San Martín",                                          lat:-32.7200, lng:-60.7300 },
-  { nombre:"Cañada de Gómez",    div:"C", fundacion:1921, liga:"ARF", direccion:"Cañada de Gómez, Santa Fe",                                          lat:-32.8232, lng:-61.3966 },
-  { nombre:"Alvarado Rosario",    div:"C", fundacion:1912, liga:"ARF", direccion:"Barrio Alvarado, Rosario",                                           lat:-32.9820, lng:-60.6600 }, // ⚠
-  { nombre:"Sportivo Colón",      div:"C", fundacion:2006, liga:"ARF", direccion:"Zona norte, Rosario",                                                lat:-32.9180, lng:-60.6800 }, // ⚠
-  { nombre:"Sp. Juvenil Rosario", div:"C", fundacion:2020, liga:"ARF", direccion:"Zona oeste, Rosario",                                                lat:-32.9730, lng:-60.7300 }, // ⚠
-  { nombre:"Nuevo Horizonte",     div:"C", fundacion:2020, liga:"ARF", direccion:"Zona noroeste, Rosario",                                             lat:-32.9250, lng:-60.7250 }, // ⚠
-];
+const LINK_ZP = 'https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-alquiler-imponente-casa-4-dorm.-zona-centro-aledana-57514616.html';
+let radioCircle = null;
+let casaLL = null;
+const layerSec   = L.layerGroup().addTo(map);
+const layerClubs = L.layerGroup().addTo(map);
  
-// ══════════════════════════════════════════════════════════════
-// DATOS – ARDYTI (Asociación Rosarina Deportiva y Turismo Infantil)
-// Solo clubes con cancha/predio propio confirmado
-// Fuentes: rosariofutbol.com fichas, rosarionoticias.gob.ar, cuitonline.com, Facebook/IG
-// ══════════════════════════════════════════════════════════════
-const clubesARDYTI = [
-  // ✔ = dirección confirmada con fuente  ⚠ = estimada
-  { nombre:"Adiur",                    div:"ard", liga:"ARDYTI", fundacion:1980, direccion:"Av. Alberdi 30 bis (esq. Av. de la Travesía) — también en ARF", lat:-32.9297, lng:-60.7068 }, // ✔ (doble afiliación)
-  { nombre:"General Paz",              div:"ard", liga:"ARDYTI", fundacion:1912, direccion:"Av. Circunvalación y Nogués — también en ARF",                  lat:-32.9575, lng:-60.6395 }, // ✔
-  { nombre:"Deportivo Rosario (ARDT)", div:"ard", liga:"ARDYTI", fundacion:2005, direccion:"Copahue 6301 (Laprida 6300) / Salta y Viaducto Avellaneda",     lat:-32.9250, lng:-60.6688 }, // ✔ deportivorosario.es.tl
-  { nombre:"Amistad y Unión",          div:"ard", liga:"ARDYTI", fundacion:1980, direccion:"Zona sureste, Rosario",                                         lat:-33.0050, lng:-60.6200 }, // ⚠ sin confirmar
-  { nombre:"A.D.I.R.",                 div:"ard", liga:"ARDYTI", fundacion:1975, direccion:"Cavia y Larrechea (Barrio Saladillo)",                           lat:-33.0080, lng:-60.6480 }, // ✔ rosarionoticias.gob.ar
-  { nombre:"Agrupación La Consolata",  div:"ard", liga:"ARDYTI", fundacion:1955, direccion:"Zona norte/Alberdi, Rosario",                                   lat:-32.9050, lng:-60.6600 }, // ⚠
-  { nombre:"Argentino 78",             div:"ard", liga:"ARDYTI", fundacion:1978, direccion:"Zona norte, Rosario",                                           lat:-32.9230, lng:-60.6750 }, // ⚠
-  { nombre:"B.A.N.C.O.",               div:"ard", liga:"ARDYTI", fundacion:1985, direccion:"Barrio Belgrano, zona norte",                                   lat:-32.9350, lng:-60.7000 }, // ⚠
-  { nombre:"C.A. Junior",              div:"ard", liga:"ARDYTI", fundacion:1970, direccion:"Zona sur, Rosario",                                             lat:-33.0000, lng:-60.6700 }, // ⚠
-  { nombre:"Central Oeste",            div:"ard", liga:"ARDYTI", fundacion:1960, direccion:"Zona centro-oeste, Rosario",                                    lat:-32.9600, lng:-60.7000 }, // ⚠
-  { nombre:"Defensores de Peñarol",    div:"ard", liga:"ARDYTI", fundacion:1968, direccion:"Barrio Peñarol, zona noroeste",                                 lat:-32.9450, lng:-60.7080 }, // ⚠
-  { nombre:"Def. de Barrio Acíndar",   div:"ard", liga:"ARDYTI", fundacion:1975, direccion:"Barrio Acíndar, zona sur (Villa Constitución)",                 lat:-33.2270, lng:-60.3250 }, // ✔ ubicación conocida
-  { nombre:"Def. de Argentina",        div:"ard", liga:"ARDYTI", fundacion:1972, direccion:"Zona sur-este, Rosario",                                        lat:-32.9950, lng:-60.6300 }, // ⚠
-  { nombre:"Def. del Centro",          div:"ard", liga:"ARDYTI", fundacion:1970, direccion:"Zona centro, Rosario",                                          lat:-32.9600, lng:-60.6500 }, // ⚠
-  { nombre:"Def. de Alvear",           div:"ard", liga:"ARDYTI", fundacion:1978, direccion:"Zona sur, Rosario",                                             lat:-32.9920, lng:-60.6550 }, // ⚠
-  { nombre:"AFI San Expedito",         div:"ard", liga:"ARDYTI", fundacion:1983, direccion:"Barrio San Expedito, zona noroeste",                             lat:-32.9280, lng:-60.7200 }, // ⚠
-  { nombre:"Juventud Provincias Unidas",div:"ard",liga:"ARDYTI", fundacion:1947, direccion:"Cochabamba 6675 (Barrio Belgrano)",                              lat:-32.9430, lng:-60.7080 }, // ✔ rosarionoticias.gob.ar
-  { nombre:"14 de Junio",              div:"ard", liga:"ARDYTI", fundacion:2012, direccion:"Viamonte 7227",                                                 lat:-32.9248, lng:-60.7350 }, // ✔ rosariofutbol.com
-  { nombre:"17 de Agosto",             div:"ard", liga:"ARDYTI", fundacion:1975, direccion:"Zona noroeste, Rosario",                                        lat:-32.9200, lng:-60.7280 }, // ⚠
-  { nombre:"6 de Mayo",                div:"ard", liga:"ARDYTI", fundacion:1980, direccion:"Zona norte, Rosario",                                           lat:-32.9220, lng:-60.6950 }, // ⚠
-  { nombre:"Alianza",                  div:"ard", liga:"ARDYTI", fundacion:1965, direccion:"Zona sur-este, Rosario",                                        lat:-33.0020, lng:-60.6350 }, // ⚠
-  { nombre:"Tupac Amarú – Colombia",   div:"ard", liga:"ARDYTI", fundacion:2002, direccion:"Tupac Amarú y Colombia (Parroquia San Héctor) — predio Unión Americana", lat:-32.9268, lng:-60.7358 }, // ✔ rosariofutbol.com
-  { nombre:"Los Reyes del Norte",      div:"ard", liga:"ARDYTI", fundacion:2005, direccion:"Zona norte, Rosario",                                           lat:-32.9100, lng:-60.6700 }, // ⚠
-  { nombre:"Horizonte (ARDYTI)",       div:"ard", liga:"ARDYTI", fundacion:1928, direccion:"Suipacha 1363 — también en ARF",                                lat:-32.9483, lng:-60.6828 }, // ✔
-  { nombre:"El Fortín",                div:"ard", liga:"ARDYTI", fundacion:1975, direccion:"Zona oeste, Rosario",                                           lat:-32.9700, lng:-60.7100 }, // ⚠
-  { nombre:"Parque Oeste",             div:"ard", liga:"ARDYTI", fundacion:1980, direccion:"Zona Parque Oeste, noroeste",                                   lat:-32.9680, lng:-60.7200 }, // ⚠
-  { nombre:"Renacimiento",             div:"ard", liga:"ARDYTI", fundacion:1990, direccion:"Zona sur, Rosario",                                             lat:-33.0100, lng:-60.6750 }, // ⚠
-];
- 
-// ══════════════════════════════════════════════════════════════
-// DATOS – AROFUSA (Asociación Rosarina de Fútbol de Salón)
-// Futsal masculino, femenino, veteranos e inferiores
-// Sede: Ricchieri 260, Rosario | Fundada: 4 agosto 1975
-// Fuentes: arofusa.com, wikipedia, rosariofutsal.blogspot.com, cunadelfutsal.com
-// ══════════════════════════════════════════════════════════════
-const clubesAROFUSA = [
-  // ✔ = dirección confirmada  ⚠ = estimada
-  { nombre:"Newell's Old Boys (FS)",  liga:"AROFUSA", fundacion:1903, direccion:"Parque Independencia – Gimnasio NOB",              lat:-32.9538, lng:-60.6612 }, // ✔ fundador
-  { nombre:"Argentino Sirio (FS)",    liga:"AROFUSA", fundacion:1946, direccion:"Italia 965",                                        lat:-32.9469, lng:-60.6447 }, // ✔ rosariofutsal
-  { nombre:"Fisherton (FS)",          liga:"AROFUSA", fundacion:1893, direccion:"Muiño 9156",                                        lat:-32.9323, lng:-60.7440 }, // ✔ fundador
-  { nombre:"Provincial (FS)",         liga:"AROFUSA", fundacion:1903, direccion:"Bv. 27 de Febrero 2672",                            lat:-32.9636, lng:-60.6647 }, // ✔
-  { nombre:"Rosario Central (FS)",    liga:"AROFUSA", fundacion:1889, direccion:"Cordiviola 1100 / Colegio Boneo – Gorriti 660",     lat:-32.9049, lng:-60.6478 }, // ✔ cunadelfutsal
-  { nombre:"Rowing (FS)",             liga:"AROFUSA", fundacion:1887, direccion:"Av. Colombres 1798",                                lat:-32.9082, lng:-60.6561 }, // ✔ rosariofutsal
-  { nombre:"Regatas (FS)",            liga:"AROFUSA", fundacion:1917, direccion:"Cordiviola 1268",                                   lat:-32.9049, lng:-60.6478 }, // ✔
-  { nombre:"Belgrano (FS)",           liga:"AROFUSA", fundacion:1905, direccion:"Italia esq. Rueda",                                 lat:-32.9698, lng:-60.6495 }, // ✔
-  { nombre:"Atlantic Sportsmen (FS)", liga:"AROFUSA", fundacion:1898, direccion:"Muiño 4325 (Fisherton)",                            lat:-32.9380, lng:-60.7280 }, // ✔ histórico
-  { nombre:"Carriego (FS)",           liga:"AROFUSA", fundacion:1932, direccion:"Av. del Huerto 1051",                               lat:-32.9422, lng:-60.6580 }, // ✔ arofusa.com
-  { nombre:"Nueva Era (FS)",          liga:"AROFUSA", fundacion:2008, direccion:"Pasaje Pettinari 6640",                             lat:-32.9215, lng:-60.7190 }, // ✔ rosariofutsal
-  { nombre:"Univ. Nacional Rosario",  liga:"AROFUSA", fundacion:1968, direccion:"Moreno 460",                                        lat:-32.9530, lng:-60.6612 }, // ✔ cunadelfutsal
-  { nombre:"Banco Nación (FS)",       liga:"AROFUSA", fundacion:1940, direccion:"Bv. Rondeau 2932",                                  lat:-32.9655, lng:-60.6760 }, // ✔
-  { nombre:"Cuba Libre (FS)",         liga:"AROFUSA", fundacion:2000, direccion:"Zona sur, Rosario",                                 lat:-33.0020, lng:-60.6620 }, // ⚠
-  { nombre:"Dep. La Fabrika (FS)",    liga:"AROFUSA", fundacion:2005, direccion:"Zona oeste, Rosario",                               lat:-32.9720, lng:-60.7050 }, // ⚠
-  { nombre:"Francisco de Godoy (FS)", liga:"AROFUSA", fundacion:1990, direccion:"Zona sur, Rosario",                                 lat:-33.0090, lng:-60.6700 }, // ⚠
-  { nombre:"Meso Futsal (FS)",        liga:"AROFUSA", fundacion:2010, direccion:"Zona centro, Rosario",                              lat:-32.9610, lng:-60.6620 }, // ⚠
-  { nombre:"Náutico (FS)",            liga:"AROFUSA", fundacion:1931, direccion:"Pedro Tuella 952",                                  lat:-32.9042, lng:-60.6592 }, // ✔
-  { nombre:"Pérez Ciudad (FS)",       liga:"AROFUSA", fundacion:1980, direccion:"Pérez, Santa Fe",                                   lat:-32.9973, lng:-60.7669 }, // ✔ zona
-  { nombre:"San Martín (FS)",         liga:"AROFUSA", fundacion:1945, direccion:"Zona sur, Rosario",                                 lat:-33.0050, lng:-60.6400 }, // ⚠
-  { nombre:"Banco Santa Fe (FS)",     liga:"AROFUSA", fundacion:1950, direccion:"Zona centro, Rosario",                              lat:-32.9560, lng:-60.6580 }, // ⚠
-  { nombre:"Unión Sionista (FS)",     liga:"AROFUSA", fundacion:1983, direccion:"Salta 2555",                                        lat:-32.9567, lng:-60.6443 }, // ✔
-  { nombre:"Horizonte (FS)",          liga:"AROFUSA", fundacion:1928, direccion:"Suipacha 1363",                                     lat:-32.9483, lng:-60.6828 }, // ✔
-  { nombre:"Sportivo Rosario (FS)",   liga:"AROFUSA", fundacion:1923, direccion:"Servando Bayo 546",                                 lat:-32.9630, lng:-60.6900 }, // ✔ arofusa.com
-  { nombre:"Luchador (FS)",           liga:"AROFUSA", fundacion:1986, direccion:"Zona oeste, Rosario",                               lat:-32.9750, lng:-60.7150 }, // ⚠
-  { nombre:"XV Diciembre (FS)",       liga:"AROFUSA", fundacion:1975, direccion:"Zona norte, Rosario",                               lat:-32.9180, lng:-60.6780 }, // ⚠
-  { nombre:"Social Zona Sud (FS)",    liga:"AROFUSA", fundacion:1970, direccion:"Zona sur, Rosario",                                 lat:-33.0130, lng:-60.6600 }, // ⚠
-  { nombre:"Velocidad y Res. (FS)",   liga:"AROFUSA", fundacion:1995, direccion:"Zona noroeste, Rosario",                            lat:-32.9400, lng:-60.7100 }, // ⚠
-  { nombre:"Echesortu F.C. (FS)",     liga:"AROFUSA", fundacion:1933, direccion:"San Nicolás al 1250",                               lat:-32.9460, lng:-60.6430 }, // ✔
-  { nombre:"Jockey Club (FS)",        liga:"AROFUSA", fundacion:1900, direccion:"Eva Perón esq. Wilde",                              lat:-32.9345, lng:-60.6412 }, // ✔
-];
- 
-// ── Colores por liga y división ──
-const coloresARF = { A:'#1a6b3a', B:'#2980b9', C:'#8e44ad' };
-const colorARDYTI  = '#e07b20';
-const colorAROFUSA = '#c0392b'; // rojo futsal
-const colorLIFA    = '#2e7d32'; // verde oscuro fútbol infantil
- 
-// ══════════════════════════════════════════════════════════════
-// DATOS – LIFA (Liga Infantil de Fútbol Asociado)
-// Fútbol infantil Rosario | Mencionada por Municipalidad de Rosario
-// Fuentes: municipalidad.rosario.gob.ar, miradorprovincial.com
-// ⚠ Lista pendiente de confirmación oficial
-// ══════════════════════════════════════════════════════════════
-const clubesLIFA = [
-  // ✔ = dirección confirmada  ⚠ = estimada
-  { nombre:"El Porvenir",          div:"lfa", liga:"LIFA", fundacion:1960, direccion:"Zona sur, Rosario",                                   lat:-33.0060, lng:-60.6480 }, // ⚠
-  { nombre:"Juventud Unida",       div:"lfa", liga:"LIFA", fundacion:1970, direccion:"Zona noroeste, Rosario",                               lat:-32.9350, lng:-60.7050 }, // ⚠
-  { nombre:"Villa del Parque",     div:"lfa", liga:"LIFA", fundacion:1975, direccion:"Zona parque oeste, Rosario",                           lat:-32.9680, lng:-60.7230 }, // ⚠
-  { nombre:"San Lorenzo (LIFA)",   div:"lfa", liga:"LIFA", fundacion:1968, direccion:"Zona sur, Rosario",                                   lat:-33.0010, lng:-60.6600 }, // ⚠
-  { nombre:"Juventud Esperanza",   div:"lfa", liga:"LIFA", fundacion:1980, direccion:"Zona norte, Rosario",                                 lat:-32.9150, lng:-60.6850 }, // ⚠
-  { nombre:"Social Belgrano",      div:"lfa", liga:"LIFA", fundacion:1965, direccion:"Barrio Belgrano, zona norte",                         lat:-32.9390, lng:-60.7060 }, // ⚠
-  { nombre:"Independiente (LIFA)", div:"lfa", liga:"LIFA", fundacion:1972, direccion:"Zona centro-sur, Rosario",                            lat:-32.9780, lng:-60.6600 }, // ⚠
-  { nombre:"Los Pinos",            div:"lfa", liga:"LIFA", fundacion:1985, direccion:"Zona noroeste, Rosario",                              lat:-32.9450, lng:-60.7150 }, // ⚠
-  { nombre:"Estrella del Sur",     div:"lfa", liga:"LIFA", fundacion:1978, direccion:"Zona sur, Rosario",                                   lat:-33.0120, lng:-60.6700 }, // ⚠
-  { nombre:"Unión y Progreso",     div:"lfa", liga:"LIFA", fundacion:1963, direccion:"Zona este, Rosario",                                  lat:-32.9550, lng:-60.6280 }, // ⚠
-  { nombre:"Atlético del Oeste",   div:"lfa", liga:"LIFA", fundacion:1971, direccion:"Zona oeste, Rosario",                                 lat:-32.9700, lng:-60.7200 }, // ⚠
-  { nombre:"La Querencia",         div:"lfa", liga:"LIFA", fundacion:1990, direccion:"Zona sur-este, Rosario",                              lat:-32.9920, lng:-60.6350 }, // ⚠
-  { nombre:"Defensores del Oeste", div:"lfa", liga:"LIFA", fundacion:1974, direccion:"Zona oeste, Rosario",                                 lat:-32.9620, lng:-60.7100 }, // ⚠
-  { nombre:"Progreso Infantil",    div:"lfa", liga:"LIFA", fundacion:1988, direccion:"Zona norte, Rosario",                                 lat:-32.9200, lng:-60.6900 }, // ⚠
-  { nombre:"Club del Barrio Sur",  div:"lfa", liga:"LIFA", fundacion:1982, direccion:"Zona sur, Rosario",                                   lat:-33.0080, lng:-60.6550 }, // ⚠
-];
- 
-// ── Escudos ──
-const escudos = {
-  "Newell's Old Boys": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Escudo_del_Club_Atletico_Newells_Old_Boys.svg/80px-Escudo_del_Club_Atletico_Newells_Old_Boys.svg.png",
-  "Rosario Central":   "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Escudo_del_Club_Atletico_Rosario_Central.svg/80px-Escudo_del_Club_Atletico_Rosario_Central.svg.png",
-  "Tiro Federal":      "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Tiro_Federal_Argentino.svg/80px-Tiro_Federal_Argentino.svg.png",
-  "Central Córdoba":   "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Escudo_del_Club_Atletico_Central_Cordoba_de_Rosario.png/80px-Escudo_del_Club_Atletico_Central_Cordoba_de_Rosario.png",
-  "Regatas Rosario":   "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Regatas_Rosario.png/80px-Regatas_Rosario.png",
-  "Rowing":            "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Rosario_Rowing_Club.png/80px-Rosario_Rowing_Club.png",
-  "Rosario Athletic":  "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Escudo_Rosario_Athletic_Club.png/80px-Escudo_Rosario_Athletic_Club.png",
-  "Provincial":        "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Esc_Provincial.png/80px-Esc_Provincial.png",
-};
- 
-function crearIcono(nombre, color, size=42) {
-  const escudo = escudos[nombre];
-  const inner = escudo
-    ? `<img src="${escudo}" style="width:${size-6}px;height:${size-6}px;object-fit:contain;"
-         onerror="this.outerHTML='<b style=\\'font-size:8px;color:${color};text-align:center;\\'>${nombre.substring(0,4).toUpperCase()}</b>'" />`
-    : `<b style="font-size:8px;color:${color};text-align:center;line-height:1.1;padding:1px;">${nombre.substring(0,4).toUpperCase()}</b>`;
-  const label = nombre.length > 16 ? nombre.substring(0,15)+'…' : nombre;
-  return L.divIcon({
-    html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-      <div style="background:${color};color:white;font-size:0.53rem;font-weight:700;
-        font-family:'Segoe UI',sans-serif;padding:2px 5px;border-radius:5px;
-        white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.3);max-width:105px;
-        overflow:hidden;text-overflow:ellipsis;text-align:center;">${label}</div>
-      <div style="width:${size}px;height:${size}px;background:white;border-radius:50%;
-        border:3px solid ${color};box-shadow:0 2px 7px rgba(0,0,0,0.22);
-        display:flex;align-items:center;justify-content:center;overflow:hidden;">${inner}</div>
-    </div>`,
-    className:'', iconSize:[112,62], iconAnchor:[56,62], popupAnchor:[0,-64]
-  });
-}
- 
-// ── Crear markers ──
-const markersARF    = [];
-const markersARDYTI = [];
-const markersAROFUSA = [];
-const markersLIFA   = [];
-let heatLayer = null;
-let heatVisible = false;
- 
-// ══════════════════════════════════════════════════════════════
-// GEOCODIFICACIÓN AUTOMÁTICA — Georef + Nominatim (igual que buscador)
-// Todos los clubes se posicionan via API en lugar de coords hardcodeadas
-// ══════════════════════════════════════════════════════════════
- 
-function normGeoref(s) {
-  return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-}
- 
-async function geocodificarDireccion(dir) {
-  // 1) Georef dirección simple
+async function geocodificar(dir) {
   try {
-    const url = `https://apis.datos.gob.ar/georef/api/direcciones?provincia=santa+fe&departamento=rosario&max=1&direccion=${encodeURIComponent(normGeoref(dir))}`;
-    const data = await fetch(url).then(r => r.json());
-    const d = data.direcciones && data.direcciones[0];
-    if (d && d.ubicacion) return { lat: d.ubicacion.lat, lng: d.ubicacion.lon };
+    const url = `https://apis.datos.gob.ar/georef/api/direcciones?provincia=santa+fe&departamento=rosario&max=1&direccion=${encodeURIComponent(dir)}`;
+    const d = await (await fetch(url)).json();
+    if (d.direcciones && d.direcciones[0]) {
+      const loc = d.direcciones[0].ubicacion;
+      if (loc && loc.lat) return { lat: loc.lat, lng: loc.lon };
+    }
   } catch(e) {}
-  // 2) Nominatim fallback
   try {
-    const url2 = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ar&city=Rosario&q=${encodeURIComponent(dir + ', Rosario, Santa Fe, Argentina')}`;
-    const data2 = await fetch(url2).then(r => r.json());
-    if (data2 && data2[0]) return { lat: parseFloat(data2[0].lat), lng: parseFloat(data2[0].lon) };
+    const url2 = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ar&q=${encodeURIComponent(dir + ', Rosario, Santa Fe, Argentina')}`;
+    const d2 = await (await fetch(url2)).json();
+    if (d2[0]) return { lat: parseFloat(d2[0].lat), lng: parseFloat(d2[0].lon) };
   } catch(e) {}
   return null;
 }
  
-// Crea y agrega un marker ARF con coords geocodificadas
-async function crearMarkerARF(c) {
-  const color = coloresARF[c.div];
-  // Extraer la primera dirección útil (antes de "/" si hay varias)
-  const dirBuscar = c.direccion.split('/')[0].replace(/Sede:|Estadio:|Cancha:|Complejo Deportivo:|Sede y Cancha:|Predio:/gi,'').trim();
-  const geo = await geocodificarDireccion(dirBuscar);
-  const coords = geo ? [geo.lat, geo.lng] : [c.lat, c.lng];
-  const m = L.marker(coords, { icon: crearIcono(c.nombre, color) });
-  m.bindPopup(`
-    <div class="popup-content">
-      ${escudos[c.nombre] ? `<img src="${escudos[c.nombre]}" onerror="this.style.display='none'" />` : ''}
-      <h3 style="color:${color}">${c.nombre}</h3>
-      <p>📍 ${c.direccion}</p>
-      <p>🏛 Fundación: ${c.fundacion}</p>
-      <span class="popup-badge badge-${c.div}">ARF · Primera ${c.div} (${c.div==='A'?'Copa Gobernador Molinas':c.div==='B'?'Copa Santiago Pinasco':'Copa Mariano Reyna'})</span>
-      ${geo ? '' : '<p style="font-size:0.6rem;color:#aaa">⚠ Ubicación estimada</p>'}
-    </div>`);
-  m._data = { ...c, lat: coords[0], lng: coords[1] };
-  markersARF.push(m);
-  m.addTo(map);
-}
- 
-async function crearMarkerARDYTI(c) {
-  const dirBuscar = c.direccion.split('/')[0].replace(/Sede:|Cancha:|Complejo:/gi,'').trim();
-  const geo = await geocodificarDireccion(dirBuscar);
-  const coords = geo ? [geo.lat, geo.lng] : [c.lat, c.lng];
-  const m = L.marker(coords, { icon: crearIcono(c.nombre, colorARDYTI, 38) });
-  m.bindPopup(`
-    <div class="popup-content">
-      <h3 style="color:${colorARDYTI}">${c.nombre}</h3>
-      <p>📍 ${c.direccion}</p>
-      <p>🏛 Fundación: ${c.fundacion}</p>
-      <span class="popup-badge badge-ard">ARDYTI · Fútbol Infantil</span>
-      ${geo ? '' : '<p style="font-size:0.6rem;color:#aaa">⚠ Ubicación estimada</p>'}
-    </div>`);
-  m._data = { ...c, lat: coords[0], lng: coords[1] };
-  markersARDYTI.push(m);
-}
- 
-async function crearMarkerAROFUSA(c) {
-  const label = c.nombre.length > 16 ? c.nombre.substring(0,15)+'…' : c.nombre;
-  const icon = L.divIcon({
-    html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-      <div style="background:${colorAROFUSA};color:white;font-size:0.53rem;font-weight:700;
-        font-family:'Segoe UI',sans-serif;padding:2px 5px;border-radius:5px;
-        white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.3);max-width:105px;
-        overflow:hidden;text-overflow:ellipsis;text-align:center;">${label}</div>
-      <div style="background:${colorAROFUSA};color:white;border-radius:5px;
-        width:22px;height:22px;display:flex;flex-direction:column;
-        align-items:center;justify-content:center;
-        box-shadow:0 2px 6px rgba(0,0,0,0.3);font-family:'Segoe UI',sans-serif;">
-        <span style="font-size:10px;line-height:1;font-weight:700;">FS</span>
-      </div>
-    </div>`,
-    className:'', iconSize:[112, 40], iconAnchor:[56, 40], popupAnchor:[0,-42]
-  });
-  const dirBuscar = c.direccion.split('/')[0].replace(/Sede:|Cancha:/gi,'').trim();
-  const geo = await geocodificarDireccion(dirBuscar);
-  const coords = geo ? [geo.lat, geo.lng] : [c.lat, c.lng];
-  const m = L.marker(coords, { icon });
-  m.bindPopup(`
-    <div class="popup-content">
-      <h3 style="color:${colorAROFUSA}">${c.nombre}</h3>
-      <p>📍 ${c.direccion}</p>
-      <p>🏛 Fundación: ${c.fundacion}</p>
-      <span class="popup-badge" style="background:${colorAROFUSA}">AROFUSA · Futsal</span>
-      ${geo ? '' : '<p style="font-size:0.6rem;color:#aaa">⚠ Ubicación estimada</p>'}
-    </div>`);
-  m._data = { ...c, div: 'fs', lat: coords[0], lng: coords[1] };
-  markersAROFUSA.push(m);
-}
- 
-async function crearMarkerLIFA(c) {
-  const dirBuscar = c.direccion.split('/')[0].trim();
-  const geo = await geocodificarDireccion(dirBuscar);
-  const coords = geo ? [geo.lat, geo.lng] : [c.lat, c.lng];
-  const m = L.marker(coords, { icon: crearIcono(c.nombre, colorLIFA, 36) });
-  m.bindPopup(`
-    <div class="popup-content">
-      <h3 style="color:${colorLIFA}">${c.nombre}</h3>
-      <p>📍 ${c.direccion}</p>
-      <p>🏛 Fundación: ${c.fundacion}</p>
-      <span class="popup-badge badge-lfa">LIFA · Fútbol Infantil</span>
-      <p style="font-size:0.65rem;color:#aaa;margin-top:4px;">⚠ Datos pendientes de confirmación oficial</p>
-    </div>`);
-  m._data = { ...c, lat: coords[0], lng: coords[1] };
-  markersLIFA.push(m);
-}
- 
-// ── Lanzar geocodificación de todos los clubes en paralelo (lotes de 5 para no saturar la API) ──
-async function geocodificarTodos() {
-  async function lote(arr, fn, size=5) {
-    for (let i = 0; i < arr.length; i += size) {
-      await Promise.all(arr.slice(i, i+size).map(fn));
-      if (i + size < arr.length) await new Promise(r => setTimeout(r, 300));
-    }
-  }
-  await lote(clubesARF,     crearMarkerARF);
-  await lote(clubesARDYTI,  crearMarkerARDYTI);
-  await lote(clubesAROFUSA, crearMarkerAROFUSA);
-  await lote(clubesLIFA,    crearMarkerLIFA);
-  // ── 🏠 CASA — Bv. Seguí 1036 ──
-  const casaIcon = L.divIcon({
-    className: '',
-    iconAnchor: [20, 42],
-    popupAnchor: [0, -42],
-    html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-      <div style="font-size:0.58rem;font-weight:800;background:#f0c040;color:#1a3a6b;
-        padding:2px 7px;border-radius:5px;white-space:nowrap;
-        box-shadow:0 1px 4px rgba(0,0,0,0.35);">BV. SEGUÍ 1036</div>
-      <div style="font-size:2rem;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.45));">🏠</div>
-    </div>`
-  });
-  const casaPopup = `
-    <div class="popup-content">
-      <h3 style="color:#f0c040;background:#1a3a6b;margin:-8px -8px 8px;padding:8px 10px;border-radius:6px 6px 0 0;">
-        🏠 Casa
-      </h3>
-      <p>📍 Bv. Seguí 1036, Rosario</p>
-      <a href="https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-bv.-segui-1036-casa-de-4-dorm.-con-cochera-en-58571948.html?n_src=Listado&n_pg=1&n_pos=1"
-        target="_blank"
-        style="display:inline-block;margin-top:6px;background:#e07b20;color:white;
-          font-size:0.7rem;font-weight:700;padding:4px 10px;border-radius:6px;
-          text-decoration:none;">🔗 Ver en ZonaProp</a>
-    </div>`;
-  let casaColocada = false;
-  try {
-    const geoC = await geocodificarDireccion('Boulevard Segui 1036');
-    if (geoC) {
-      L.marker([geoC.lat, geoC.lng], { icon: casaIcon, zIndexOffset: 1500 })
-        .bindPopup(casaPopup, { maxWidth: 240 }).addTo(map);
-      casaColocada = true;
-    }
-  } catch(e) {}
-  if (!casaColocada) {
-    // Fallback Nominatim directo
-    try {
-      const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ar&q=${encodeURIComponent('Boulevard Segui 1036, Rosario, Santa Fe, Argentina')}`).then(r=>r.json());
-      if (r && r[0]) {
-        L.marker([parseFloat(r[0].lat), parseFloat(r[0].lon)], { icon: casaIcon, zIndexOffset: 1500 })
-          .bindPopup(casaPopup, { maxWidth: 240 }).addTo(map);
-      }
-    } catch(e) {}
-  }
- 
-  // ── 🏘 CASAS ARGENPROP — Alquiler 4+ dorm. Rosario ──
-  const casasArgenprop = [
-    { direccion: "Italia 1100", precio: "$ 2.500.000", features: "90 m² · 5 dorm. · 1 baño", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario-6-ambientes--18699213" },
-    { direccion: "San Martín 3600", precio: "$ 2.000.000", features: "373 m² · 5 dorm. · 4 baños", link: "https://www.argenprop.com/casa-en-alquiler-en-general-jose-de-san-martin-6-ambientes--15911108" },
-    { direccion: "Moreno 300", precio: "$ 1.800.000", features: "195 m² · 5 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-centro--18661561" },
-    { direccion: "Dorrego 1182", precio: "$ 1.600.000", features: "170 m² · 4 dorm. · A Estrenar", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario--19069675" },
-    { direccion: "Génova y J.B.Justo", precio: "USD 1.900", features: "300 m² · 4 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-aldea-8-ambientes--19181387" },
-    { direccion: "Bv. Oroño al 1400", precio: "Consultar precio", features: "640 m² · 7 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-centro--17231044" },
-    { direccion: "Ayolas 1200", precio: "$ 900.000", features: "4 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario--19069675" },
-    { direccion: "Montevideo 3100", precio: "$ 1.100.000", features: "4 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario--18699213" },
-    { direccion: "Bv. Oroño 39", precio: "$ 7.500.000", features: "600 m² · 5 dorm. · 3 baños", link: "https://www.argenprop.com/casa-en-alquiler-en-centro-8-ambientes--17404774" },
-    { direccion: "Oroño al 1500", precio: "USD 5.000", features: "4 dorm. · 3 baños", link: "https://www.argenprop.com/casa-en-alquiler-en-centro--17231044" },
-    { direccion: "Juan Jose Paso al 8700", precio: "USD 2.000", features: "309 m² · 4 dorm. · A Estrenar", link: "https://www.argenprop.com/casa-en-alquiler-en-fisherton-9-ambientes--18365837" },
-    { direccion: "Juan Manuel de Rosas 3289", precio: "$ 1.200.000", features: "145 m² · 4 dorm. · A Estrenar", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario-8-ambientes--18054400" },
-    { direccion: "Córdoba 2836", precio: "$ 1.200.000", features: "120 m² · 5 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-centro-7-ambientes--18881941" },
-    { direccion: "Avenida Carlos Colombres 1100", precio: "$ 1.850.000", features: "4 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario--19069675" },
-    { direccion: "Boulevard Oroño 100", precio: "USD 5.000", features: "600 m² · 4 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario-8-ambientes--19189853" },
-    { direccion: "Dorrego al 2700", precio: "$ 980.000", features: "60 m² · 4 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-barrio-espana-y-hospitales-8-ambientes--19191826" },
-    { direccion: "Av. Pte. Perón al 3700", precio: "$ 1.800.000", features: "378 m² · 5 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario-10-ambientes--19192160" },
-    { direccion: "Oroño al 1500", precio: "$ 7.000.000", features: "465 m² · 5 dorm.", link: "https://www.argenprop.com/casa-en-alquiler-en-rosario-11-ambientes--19217659" }
-  ];
- 
-  // Ícono Argenprop: verde con etiqueta "AP" y casa verde rombo
-  const argenpropIcon = (dir) => L.divIcon({
-    className: '',
-    iconAnchor: [16, 42],
-    popupAnchor: [0, -42],
-    html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-      <div style="font-size:0.48rem;font-weight:800;background:#00a650;color:white;
-        padding:2px 5px;border-radius:4px;white-space:nowrap;max-width:95px;overflow:hidden;
-        text-overflow:ellipsis;box-shadow:0 1px 3px rgba(0,0,0,0.35);letter-spacing:0.01em;">🟢 ${dir}</div>
-      <div style="width:28px;height:28px;background:#00a650;border-radius:50%;
-        display:flex;align-items:center;justify-content:center;
-        box-shadow:0 2px 6px rgba(0,166,80,0.55);border:2px solid white;">
-        <span style="font-size:1rem;line-height:1;">🏡</span>
-      </div>
-    </div>`
-  });
- 
-  for (const casa of casasArgenprop) {
-    try {
-      const geo = await geocodificarDireccion(casa.direccion);
-      if (!geo) continue;
-      const labelCorto = casa.direccion.length > 18 ? casa.direccion.substring(0,17)+'…' : casa.direccion;
-      L.marker([geo.lat, geo.lng], { icon: argenpropIcon(labelCorto), zIndexOffset: 1200 })
-        .bindPopup(`
-          <div class="popup-content">
-            <h3 style="color:white;background:#00a650;margin:-8px -8px 8px;padding:8px 10px;border-radius:6px 6px 0 0;">
-              🏡 Alquiler · Argenprop
-            </h3>
-            <p>📍 ${casa.direccion}</p>
-            <p>💰 ${casa.precio}</p>
-            <p style="font-size:0.72rem;color:#555">${casa.features}</p>
-            <a href="${casa.link}" target="_blank"
-              style="display:inline-block;margin-top:6px;background:#00a650;color:white;
-                font-size:0.7rem;font-weight:700;padding:4px 10px;border-radius:6px;
-                text-decoration:none;">🔗 Ver en Argenprop</a>
-          </div>`, { maxWidth: 260 })
-        .addTo(map);
-    } catch(e) {}
-    await new Promise(r => setTimeout(r, 200));
-  }
- 
-  // ── 🏘 CASAS ZONAPROP — Alquiler 4 dorm. Rosario ──
-  const casasZonaprop = [
-    { direccion: "España 865, Rosario",           precio: "USD 2.500",    features: "273 m² · 6 amb. · 4 dorm. · 2 baños",           link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-en-rosario-58567176.html" },
-    { direccion: "Godoy Cruz 422, Rosario",        precio: "$ 2.400.000", features: "240 m² · 7 amb. · 4 dorm. · 4 baños · 3 coch.",  link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-godoy-cruz-422-57556513.html" },
-    { direccion: "Dorrego 1182, Rosario",          precio: "$ 1.600.000", features: "200 m² · 4 dorm.",                                link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-en-rosario-58567176.html" },
-    { direccion: "Bv. Seguí 1036, Rosario",        precio: "$ 1.400.000", features: "259 m² · 7 amb. · 4 dorm. · 3 baños · 2 coch.",  link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-bv.-segui-1036-casa-de-4-dorm.-con-cochera-en-58571948.html" },
-    { direccion: "Av. Pellegrini 9, Rosario",      precio: "$ 1.900.000", features: "340 m² · 5 amb. · 4 dorm.",                      link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-alquiler-imponente-casa-4-dorm.-zona-centro-aledana-57514616.html" },
-    { direccion: "Juan José Paso 8745, Rosario",   precio: "$ 2.700.000", features: "310 m² · 5 amb. · 4 dorm. · 5 baños · 2 coch.",  link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-excelente-casa-en-fisherton-en-barrio-privado-4-dorm.-58264408.html" },
-    { direccion: "Güemes 2915, Rosario",           precio: "Consultar",   features: "322 m² · 8 amb. · 4 dorm. · 2 baños",            link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-alquiler-apto-comercio-en-pichincha-57296221.html" },
-    { direccion: "Blas Parera 421, Rosario",       precio: "$ 1.500.000", features: "260 m² · 7 amb. · 4 dorm. · 1 baño",             link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-blas-parera-421-57665743.html" },
-    { direccion: "Castellanos 1500, Rosario",      precio: "$ 1.300.000", features: "150 m² · 4 dorm. · 2 baños · 1 coch.",            link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-en-echesortu.-4-dorm.-patio.-cochera.-quincho.-58576685.html" },
-    { direccion: "Rubén Darío 1279, Rosario",      precio: "Consultar",   features: "110 m² · 7 amb. · 4 dorm. · 2 baños",            link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-hermosa-casa-con-cochera-en-arroyito-51378889.html" },
-    { direccion: "Av. Ovidio Lagos 2401, Rosario", precio: "$ 1.800.000", features: "200 m² · 5 amb. · 4 dorm. · 2 baños",            link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-propiedad-comercial-en-esquina-200-m-sup2--en-ov.-57136181.html" },
-    { direccion: "Av. Pellegrini 1487, Rosario",   precio: "$ 1.700.000", features: "230 m² · 5 amb. · 4 dorm. · 2 baños",            link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-hermosa-casa-en-alquiler-4-dorm!-58062959.html" },
-    { direccion: "Balcarce 738, Rosario",          precio: "$ 2.500.000", features: "259 m² · 6 amb. · 4 dorm. · 4 baños",            link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-en-rosario-57453693.html" },
-    { direccion: "Gaboto 1210, Rosario",           precio: "$ 800.000",   features: "87 m² · 5 amb. · 4 dorm. · 2 baños",             link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-alquiler-casa-4-dorm.-gaboto-1210-barrio-58556696.html" },
-    { direccion: "Juan José Paso 8700, Rosario",   precio: "USD 2.000",   features: "1713 m² · 9 amb. · 4 dorm. · 4 baños · 2 coch.", link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-en-venta-con-pileta-y-jardin-57458258.html" },
-    { direccion: "Tucumán 5770, Rosario",          precio: "$ 700.000",   features: "130 m² · 6 amb. · 4 dorm. · 2 baños · 1 coch.",  link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-alquiler-casa-de-4-dorm.-tucuman-5700-58518411.html" },
-    { direccion: "Bv. Oroño 0, Rosario",           precio: "USD 5.000",   features: "850 m² · 8 amb. · 4 dorm. · 4 baños · 7 coch.",  link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-alquiler-institucional-unica-casa-en-bv.-orono-58535462.html" },
-    { direccion: "Av. Carlos Colombres 1100, Rosario", precio: "$ 1.850.000", features: "216 m² · 5 amb. · 4 dorm. · 3 baños · 3 coch.", link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-4-dorm.-alquiler-alberdi-rosario-58251709.html" },
-    { direccion: "Herrera 900, Rosario",           precio: "$ 1.400.000", features: "200 m² · 5 amb. · 4 dorm. · 3 baños · 1 coch.",  link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-4-dorm.-alquiler-alberdi-rosario-58251709.html" },
-    { direccion: "Italia 1070, Rosario",           precio: "$ 1.000.000", features: "120 m² · 6 amb. · 4 dorm. · 1 baño",             link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-en-planta-alta-en-alquiler-en-italia-1070-58566308.html" },
-    { direccion: "La Paz y Necochea, Rosario",     precio: "$ 580.000",   features: "109 m² · 5 amb. · 4 dorm. · 2 baños",            link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-venta-casa-4-dorm.-58560785.html" },
-    { direccion: "San Lorenzo 4081, Rosario",      precio: "$ 650.000",   features: "166 m² · 6 amb. · 4 dorm. · 2 baños",            link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-san-lorenzo-4081-planta-alta-42222652.html" },
-    { direccion: "Dorrego 2700, Rosario",          precio: "$ 980.000",   features: "120 m² · 8 amb. · 4 dorm. · 1 baño",             link: "https://www.zonaprop.com.ar/propiedades/clasificado/alclcain-casa-al-frente-de-3-dorm.-con-patio-y-terraza-en-58542004.html" },
-  ];
- 
-  // Ícono ZonaProp: naranja con etiqueta "ZP" y casa naranja
-  const zonapropIcon = (dir) => L.divIcon({
-    className: '',
-    iconAnchor: [16, 42],
-    popupAnchor: [0, -42],
-    html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-      <div style="font-size:0.48rem;font-weight:800;background:#ff6000;color:white;
-        padding:2px 5px;border-radius:4px;white-space:nowrap;max-width:95px;overflow:hidden;
-        text-overflow:ellipsis;box-shadow:0 1px 3px rgba(0,0,0,0.35);letter-spacing:0.01em;">🟠 ${dir}</div>
-      <div style="width:28px;height:28px;background:#ff6000;border-radius:6px;
-        display:flex;align-items:center;justify-content:center;
-        box-shadow:0 2px 6px rgba(255,96,0,0.55);border:2px solid white;">
-        <span style="font-size:1rem;line-height:1;">🏠</span>
-      </div>
-    </div>`
-  });
- 
-  for (const casa of casasZonaprop) {
-    try {
-      const geo = await geocodificarDireccion(casa.direccion);
-      if (!geo) continue;
-      const labelCorto = casa.direccion.replace(', Rosario','').substring(0,18);
-      L.marker([geo.lat, geo.lng], { icon: zonapropIcon(labelCorto), zIndexOffset: 1300 })
-        .bindPopup(`
-          <div class="popup-content">
-            <h3 style="color:white;background:#ff6000;margin:-8px -8px 8px;padding:8px 10px;border-radius:6px 6px 0 0;">
-              🏠 Alquiler · ZonaProp
-            </h3>
-            <p>📍 ${casa.direccion.replace(', Rosario','')}</p>
-            <p>💰 ${casa.precio}</p>
-            <p style="font-size:0.72rem;color:#555">${casa.features}</p>
-            <a href="${casa.link}" target="_blank"
-              style="display:inline-block;margin-top:6px;background:#ff6000;color:white;
-                font-size:0.7rem;font-weight:700;padding:4px 10px;border-radius:6px;
-                text-decoration:none;">🔗 Ver en ZonaProp</a>
-          </div>`, { maxWidth: 260 })
-        .addTo(map);
-    } catch(e) {}
-    await new Promise(r => setTimeout(r, 200));
-  }
- 
-  // Aplicar visibilidad inicial y heatmap después de cargar todos
-  precalcularZonas(markersARF);
-  precalcularZonas(markersARDYTI);
-  precalcularZonas(markersAROFUSA);
-  precalcularZonas(markersLIFA);
-  aplicarFiltros();
-  buildHeat();
-}
- 
-geocodificarTodos();
- 
- 
- 
-// ── Estado del filtro ──
-let ligaActiva = 'ARF'; // 'ARF' | 'ARDYTI' | 'AROFUSA' | 'LIFA' | 'BOTH'
-let divActiva  = 'all';
-let zonaActiva = 'TODAS'; // 'TODAS' | 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SO' | 'O' | 'NO'
- 
-// ── Centro de referencia para cálculo de zonas (centro geográfico de Rosario) ──
-const ZONA_CLAT = -32.9595;
-const ZONA_CLNG = -60.6900;
- 
-function calcularZona(lat, lng) {
-  const dlat = -(lat - ZONA_CLAT); // positivo = norte
-  const dlng = lng - ZONA_CLNG;    // positivo = este
-  const ang = Math.atan2(dlng, dlat) * 180 / Math.PI; // 0=N, 90=E, ±180=S, -90=O
-  if (ang >= -22.5 && ang < 22.5)   return 'N';
-  if (ang >= 22.5  && ang < 67.5)   return 'NE';
-  if (ang >= 67.5  && ang < 112.5)  return 'E';
-  if (ang >= 112.5 && ang < 157.5)  return 'SE';
-  if (ang >= 157.5 || ang < -157.5) return 'S';
-  if (ang >= -157.5 && ang < -112.5) return 'SO';
-  if (ang >= -112.5 && ang < -67.5)  return 'O';
-  return 'NO';
-}
- 
-// Pre-calcular zona de cada marker
-function precalcularZonas(markers) {
-  markers.forEach(m => { m._zona = calcularZona(m._data.lat, m._data.lng); });
-}
- 
-function enZona(m) {
-  if (zonaActiva === 'TODAS') return true;
-  return m._zona === zonaActiva;
-}
- 
-function aplicarFiltros() {
-  markersARF.forEach(m => {
-    const mostrar = (ligaActiva==='ARF' || ligaActiva==='BOTH')
-      && (divActiva==='all' || m._data.div===divActiva)
-      && enZona(m);
-    if (mostrar && !map.hasLayer(m)) m.addTo(map);
-    if (!mostrar && map.hasLayer(m)) map.removeLayer(m);
-  });
-  markersARDYTI.forEach(m => {
-    const mostrar = (ligaActiva==='ARDYTI' || ligaActiva==='BOTH') && enZona(m);
-    if (mostrar && !map.hasLayer(m)) m.addTo(map);
-    if (!mostrar && map.hasLayer(m)) map.removeLayer(m);
-  });
-  markersAROFUSA.forEach(m => {
-    const mostrar = (ligaActiva==='AROFUSA' || ligaActiva==='BOTH') && enZona(m);
-    if (mostrar && !map.hasLayer(m)) m.addTo(map);
-    if (!mostrar && map.hasLayer(m)) map.removeLayer(m);
-  });
-  markersLIFA.forEach(m => {
-    const mostrar = (ligaActiva==='LIFA' || ligaActiva==='BOTH') && enZona(m);
-    if (mostrar && !map.hasLayer(m)) m.addTo(map);
-    if (!mostrar && map.hasLayer(m)) map.removeLayer(m);
-  });
-  // Mostrar sub-filtros ARF solo cuando corresponde
-  document.getElementById('divFilterRow').style.display =
-    (ligaActiva==='ARF' || ligaActiva==='BOTH') ? 'flex' : 'none';
-  actualizarBadges();
-  actualizarLabelZona();
-}
- 
-function actualizarLabelZona() {
-  const lbl = document.getElementById('labelZona');
-  if (!lbl) return;
-  if (zonaActiva === 'TODAS') { lbl.textContent = ''; return; }
-  const nombres = { N:'Norte', NE:'Noreste', E:'Este', SE:'Sureste',
-                    S:'Sur', SO:'Suroeste', O:'Oeste', NO:'Noroeste' };
-  const total = [...markersARF,...markersARDYTI,...markersAROFUSA,...markersLIFA]
-    .filter(m => map.hasLayer(m)).length;
-  lbl.textContent = `${nombres[zonaActiva]} · ${total} club${total!==1?'es':''}`;
-}
- 
-window.setZona = function(zona) {
-  zonaActiva = zona;
-  // Actualizar UI de botones
-  ['N','NE','E','SE','S','SO','O','NO','TODAS'].forEach(z => {
-    const btn = document.getElementById('z'+z);
-    if (!btn) return;
-    if (z === 'TODAS') {
-      btn.classList.toggle('active', zona === 'TODAS');
-    } else {
-      btn.classList.toggle('active', z === zona);
-    }
-  });
-  // Mover el mapa a la zona seleccionada si no es Todas
-  if (zona !== 'TODAS') {
-    // Tomar todos los markers (respetando liga activa) que estén en esa zona
-    const todosFiltrados = [
-      ...(ligaActiva==='ARF'||ligaActiva==='BOTH' ? markersARF : []),
-      ...(ligaActiva==='ARDYTI'||ligaActiva==='BOTH' ? markersARDYTI : []),
-      ...(ligaActiva==='AROFUSA'||ligaActiva==='BOTH' ? markersAROFUSA : []),
-      ...(ligaActiva==='LIFA'||ligaActiva==='BOTH' ? markersLIFA : []),
-      ...markersARF, ...markersARDYTI, ...markersAROFUSA, ...markersLIFA // fallback: todos
-    ];
-    const visible = todosFiltrados.filter(m => m._zona === zona);
-    const uniq = [...new Map(visible.map(m=>[m._leaflet_id,m])).values()];
-    if (uniq.length > 0) {
-      const lats = uniq.map(m=>m._data.lat);
-      const lngs = uniq.map(m=>m._data.lng);
-      const bounds = L.latLngBounds(
-        [Math.min(...lats)-0.012, Math.min(...lngs)-0.012],
-        [Math.max(...lats)+0.012, Math.max(...lngs)+0.012]
-      );
-      map.flyToBounds(bounds, { padding:[30,30], duration:0.7, maxZoom:14 });
-    }
-  } else {
-    map.flyTo([-32.9595, -60.6900], 12, { duration:0.7 });
-  }
-  aplicarFiltros();
-  buildHeat();
-};
- 
-function actualizarBadges() {
-  const arf = markersARF.filter(m => map.hasLayer(m)).length;
-  const ard = markersARDYTI.filter(m => map.hasLayer(m)).length;
-  const afs = markersAROFUSA.filter(m => map.hasLayer(m)).length;
-  const lfa = markersLIFA.filter(m => map.hasLayer(m)).length;
-  document.getElementById('badgeARF').textContent = `${arf} clubes ARF`;
-  document.getElementById('badgeARD').textContent = ard > 0 ? `${ard} clubes ARDYTI` : '27 clubes ARDYTI';
-  document.getElementById('badgeAFS').textContent = afs > 0 ? `${afs} clubes AROFUSA` : `${clubesAROFUSA.length} clubes AROFUSA`;
-  document.getElementById('badgeLFA').textContent = lfa > 0 ? `${lfa} clubes LIFA` : `${clubesLIFA.length} clubes LIFA`;
-}
- 
-// ══════════════════════════════════════════════════════════════
-// COLEGIOS SECUNDARIOS — Overpass API
-// ══════════════════════════════════════════════════════════════
-const COLOR_PUBLICA     = '#0d6efd'; // azul vivo
-const COLOR_PRIVADA     = '#e91e8c'; // rosa/fucsia
-const COLOR_DESCONOCIDO = '#546e7a'; // gris
- 
-let colegioLayer    = null;
-let colegiosVisible = false;
-let escFiltroActivo = 'all';
- 
-function distM(a,b,c,d){
-  const R=6371000,dLat=(c-a)*Math.PI/180,dLng=(d-b)*Math.PI/180;
+function distM(a, b, c, d) {
+  const R=6371000, dLat=(c-a)*Math.PI/180, dLng=(d-b)*Math.PI/180;
   const x=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLng/2)**2;
-  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+  return Math.round(R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)));
 }
  
-function schoolColor(tipo){
-  if(tipo==='Pública')  return COLOR_PUBLICA;
-  if(tipo==='Privada')  return COLOR_PRIVADA;
-  return COLOR_DESCONOCIDO;
-}
- 
-function makeSchoolIcon(tipo){
-  const color = schoolColor(tipo);
-  const letra = tipo==='Pública' ? 'P' : tipo==='Privada' ? 'V' : '?';
+function iconCasa() {
   return L.divIcon({
-    html:`<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-      <div style="background:${color};color:white;border-radius:5px;
-        width:24px;height:24px;display:flex;align-items:center;justify-content:center;
-        box-shadow:0 2px 6px rgba(0,0,0,0.35);font-family:'Segoe UI',sans-serif;
-        font-size:12px;font-weight:800;">${letra}</div>
-    </div>`,
-    className:'', iconSize:[24,24], iconAnchor:[12,12], popupAnchor:[0,-14]
+    className:'', iconAnchor:[22,54], popupAnchor:[0,-56],
+    html:`<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+      <div style="font-size:0.52rem;font-weight:800;background:#ff6000;color:white;
+        padding:3px 8px;border-radius:6px;white-space:nowrap;
+        box-shadow:0 2px 8px rgba(255,96,0,0.65);">🏠 Av. Pellegrini 9</div>
+      <div style="width:38px;height:38px;background:#ff6000;border-radius:10px;
+        display:flex;align-items:center;justify-content:center;
+        box-shadow:0 3px 14px rgba(255,96,0,0.7);border:3px solid white;">
+        <span style="font-size:1.35rem;">🏠</span>
+      </div>
+    </div>`
   });
 }
  
-function detectarTipo(tags){
-  const st=(tags['school:type']||'').toLowerCase();
-  if(st.includes('public')||st.includes('publica')||st.includes('pública')) return 'Pública';
-  if(st.includes('private')||st.includes('privada')) return 'Privada';
-  const ot=(tags['operator:type']||'').toLowerCase();
-  if(ot==='public'||ot==='government') return 'Pública';
-  if(ot==='private'||ot==='ngo')       return 'Privada';
-  const et=(tags['education:type']||tags['isced:type']||'').toLowerCase();
-  if(et.includes('publ')) return 'Pública';
-  if(et.includes('priv')) return 'Privada';
-  const op=(tags.operator||'').toLowerCase();
-  const nm=(tags.name||'').toLowerCase();
-  const pubK=['provincia','provincial','municipal','gobierno','estado','ministerio',
-               'nacion','nacional','epet','eeso','eempi','cens','escuela n°','escuela nro'];
-  const priK=['privad','congreg','hermanas','hermanos','don bosco','salesiano','lasalle',
-               'la salle','marista','marist','instituto','liceo','ort','parroqui','iglesia',
-               'adventista','evangel','metodist','santa ','san ','colegio del'];
-  if(pubK.some(k=>op.includes(k)||nm.includes(k))) return 'Pública';
-  if(priK.some(k=>op.includes(k)||nm.includes(k))) return 'Privada';
-  if(tags.fee==='yes') return 'Privada';
-  if(tags.fee==='no')  return 'Pública';
-  return 'Desconocida';
+async function buscarSecPublicos(lat, lng, radioM) {
+  const delta = radioM / 111000;
+  const bbox = `${lat-delta},${lng-delta*1.5},${lat+delta},${lng+delta*1.5}`;
+  const q = `[out:json][timeout:30];
+(
+  node["amenity"="school"](${bbox});
+  way["amenity"="school"](${bbox});
+  relation["amenity"="school"](${bbox});
+);
+out center tags;`;
+ 
+  const resp = await fetch('https://overpass-api.de/api/interpreter', {
+    method:'POST', body:'data='+encodeURIComponent(q)
+  });
+  const data = await resp.json();
+ 
+  const seen = new Set();
+  const out  = [];
+ 
+  for (const el of data.elements) {
+    const clat = el.lat || (el.center && el.center.lat);
+    const clng = el.lon  || (el.center && el.center.lon);
+    if (!clat || !clng) continue;
+ 
+    const d = distM(lat, lng, clat, clng);
+    if (d > radioM) continue;
+ 
+    const tags = el.tags || {};
+    const nombre = tags.name || tags['name:es'] || '';
+    if (!nombre) continue;
+ 
+    const key = nombre.toLowerCase().replace(/\s/g,'') + Math.round(clat*10000);
+    if (seen.has(key)) continue;
+    seen.add(key);
+ 
+    const nL = nombre.toLowerCase();
+    const isced = tags['isced:level'] || '';
+    const slevel = (tags['school:level'] || '').toLowerCase();
+ 
+    // ── ¿Es secundario? ──
+    const esPrim =
+      isced.includes('1') || slevel.includes('primary') ||
+      nL.includes('primari') || nL.includes('elemental') ||
+      nL.includes('inicial') || nL.includes('jardín') ||
+      nL.includes('jardin') || nL.includes('preescolar');
+    if (esPrim) continue;
+ 
+    const esSec =
+      isced.match(/[23456]/) || slevel.includes('secondary') ||
+      nL.includes('secundar') || nL.includes('bachiller') ||
+      nL.includes('técnica') || nL.includes('tecnica') ||
+      nL.includes('ipem') || nL.includes('comerci') ||
+      nL.includes('polimodal') || nL.includes(' media') ||
+      nL.includes('industrial') || nL.includes('instituto') ||
+      nL.includes('colegio') || nL.includes('liceo') ||
+      nL.includes('eem ') || nL.includes('ens.') ||
+      // Si no hay dato ISCED pero tampoco es primario ni inicial → incluir
+      (isced === '' && slevel === '');
+ 
+    if (!esSec) continue;
+ 
+    // ── ¿Es público? ──
+    const op  = (tags.operator || tags['operator:type'] || '').toLowerCase();
+    const fee = (tags.fee || '').toLowerCase();
+    const rel = tags.religion || tags.denomination || '';
+ 
+    const esPrivado =
+      fee === 'yes' ||
+      op.includes('privad') || op.includes('congreg') ||
+      op.includes('hermano') || op.includes('asociac') ||
+      op.includes('fundac') || op.includes('dioces') ||
+      rel !== '' || tags['private'] === 'yes';
+ 
+    if (esPrivado) continue;
+ 
+    out.push({ nombre, clat, clng, dist:d, tags });
+  }
+ 
+  out.sort((a,b) => a.dist - b.dist);
+  return out;
 }
  
-async function cargarColegios(){
-  const q=`[out:json][timeout:40];
-area["name"="Rosario"]["admin_level"="8"]->.r;
-(
-  node["amenity"="school"](area.r);
-  way["amenity"="school"](area.r);
-)->.s;
-.s out center tags;`;
-  try{
-    const resp=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q)});
-    const data=await resp.json();
-    const lg=L.layerGroup();
-    let pub=0,priv=0,desc=0;
+function dibujar(lista) {
+  layerSec.clearLayers();
+  for (const c of lista) {
+    const nL = c.nombre.toLowerCase();
+    const esInst = nL.includes('instituto') || nL.includes('liceo') || nL.includes('bachiller');
+    const color  = esInst ? '#e040fb' : '#9b59b6';
  
-    const secKeywords=[
-      'secundari','secundar','media','bachiller','bachillerato','polimodal','técnica','tecnica',
-      'técnico','tecnico','comercial','industrial','agrotécnic','agrotecnic',
-      'eeso','eempi','eempa','epet','empa','ipem','ipet','cens',
-      'enet','escuela de enseñanza media','eem ','e.e.m',
-      'nacional n°','nacional nro','nacional núm',
-      'inst. técnico','inst. tecnico','inst. nac','instituto nacional',
-      'politécnico','politecnico','superior','normal'
-    ];
-    const excKeywords=['jardin','jardín','primari','inicial','preescolar','infantil','kinder'];
- 
-    function esSecundario(tags){
-      const sl=(tags['school:level']||tags['isced:level']||tags['education:level']||'').toLowerCase();
-      if(sl){
-        if(sl.includes('secondary')||sl.includes('2')||sl.includes('3')) return true;
-        if(sl.includes('primary')||sl.includes('preschool')||sl.includes('1')) return false;
-      }
-      const nombre=(tags.name||'').toLowerCase();
-      const op=(tags.operator||'').toLowerCase();
-      const texto=nombre+' '+op;
-      if(excKeywords.some(k=>texto.includes(k))) return false;
-      if(secKeywords.some(k=>texto.includes(k))) return true;
-      const st=(tags['school:type']||'').toLowerCase();
-      if(st.includes('secondary')||st.includes('media')) return true;
-      return true;
-    }
- 
-    // Deduplicar: clave = coordenadas redondeadas a 4 decimales + nombre
-    const vistos = new Set();
- 
-    data.elements.forEach(el=>{
-      const lat=el.lat||(el.center&&el.center.lat);
-      const lng=el.lon||(el.center&&el.center.lon);
-      if(!lat||!lng) return;
-      if(!esSecundario(el.tags)) return;
- 
-      // Clave de deduplicación
-      const clave = `${lat.toFixed(4)}_${lng.toFixed(4)}_${(el.tags.name||'').toLowerCase()}`;
-      if(vistos.has(clave)) return;
-      vistos.add(clave);
- 
-      const nombre=el.tags.name||'Escuela s/n';
-      const tipo=detectarTipo(el.tags);
-      const color=schoolColor(tipo);
-      const dir=[el.tags['addr:street']||'',el.tags['addr:housenumber']||''].join(' ').trim();
-      if(tipo==='Pública') pub++;
-      else if(tipo==='Privada') priv++;
-      else desc++;
- 
-      // zIndexOffset alto para que el colegio quede encima y su popup no se confunda con el de un club
-      const mk=L.marker([lat,lng],{icon:makeSchoolIcon(tipo), zIndexOffset:500});
-      mk._tipoColegio=tipo;
- 
-      const popupHtml=`<div class="popup-content">
-         <h3 style="color:${color}">🎓 ${nombre}</h3>
-         ${dir?`<p>📍 ${dir}</p>`:''}
-         <p>🏫 Nivel: <b>Secundario</b> · Gestión: <b style="color:${color}">${tipo}</b></p>
-         ${el.tags.operator?`<p>🏢 ${el.tags.operator}</p>`:''}
-         <span class="popup-badge" style="background:${color}">
-           ${tipo==='Pública'?'Sec. Pública':tipo==='Privada'?'Sec. Privada':'Sec. s/dato gestión'}
-         </span></div>`;
-      mk.bindPopup(popupHtml, {autoPan:false});
-      lg.addLayer(mk);
+    const mk = L.circleMarker([c.clat, c.clng], {
+      radius:10, fillColor:color, color:'white',
+      weight:2.5, opacity:1, fillOpacity:0.88
     });
  
-    colegioLayer=lg;
-    const tot=pub+priv+desc;
-    document.getElementById('labelColegios').textContent=
-      `🎓 Sec. (${tot}) — 🔵 ${pub} púb. · 🩷 ${priv} priv.`;
-    return tot;
-  }catch(e){ console.warn('Overpass error',e); return 0; }
-}
+    mk.bindTooltip(
+      `🎓 ${c.nombre.length>34 ? c.nombre.substring(0,33)+'…' : c.nombre}`,
+      { direction:'top' }
+    );
  
-window.toggleColegios = async function(){
-  const btn=document.getElementById('btnColegios');
-  const btnAll=document.getElementById('btnEsc_all');
-  const btnPub=document.getElementById('btnEsc_Pública');
-  const btnPriv=document.getElementById('btnEsc_Privada');
-  if(!colegiosVisible){
-    if(!colegioLayer){
-      btn.textContent='⏳ Cargando...';
-      await cargarColegios();
-    }
-    if(colegioLayer){ colegioLayer.addTo(map); colegiosVisible=true; }
-    btn.textContent='🎓 Sec. ✓'; btn.classList.add('toggle-on');
-    if(btnAll)  btnAll.style.display='';
-    if(btnPub)  btnPub.style.display='';
-    if(btnPriv) btnPriv.style.display='';
-  } else {
-    if(colegioLayer) map.removeLayer(colegioLayer);
-    colegiosVisible=false;
-    btn.textContent='🎓 Sec.'; btn.classList.remove('toggle-on');
-    if(btnAll)  btnAll.style.display='none';
-    if(btnPub)  btnPub.style.display='none';
-    if(btnPriv) btnPriv.style.display='none';
-  }
-};
+    const calle = c.tags['addr:street']
+      ? `<p>📍 ${c.tags['addr:street']} ${c.tags['addr:housenumber']||''}</p>` : '';
+    const web = c.tags.website
+      ? `<p><a href="${c.tags.website}" target="_blank" style="color:#b39ddb;">🌐 Sitio web</a></p>` : '';
  
-window.filtrarEscuelas = function(tipo){
-  escFiltroActivo=tipo;
-  ['all','Pública','Privada'].forEach(t => {
-    const b = document.getElementById('btnEsc_'+t);
-    if (b) b.classList.toggle('active', t===tipo);
-  });
-  if(!colegioLayer) return;
-  colegioLayer.eachLayer(l=>{
-    const t=l._tipoColegio||'';
-    const visible=tipo==='all'||(tipo==='Pública'&&t==='Pública')||(tipo==='Privada'&&t==='Privada');
-    if(visible&&!map.hasLayer(l)) l.addTo(map);
-    if(!visible&&map.hasLayer(l)) map.removeLayer(l);
-  });
-};
- 
-// ── Heatmap ──
-function buildHeat() {
-  const pts=[];
-  markersARF.forEach(m=>{if(map.hasLayer(m)) pts.push([m._data.lat,m._data.lng,1.2]);});
-  markersARDYTI.forEach(m=>{if(map.hasLayer(m)) pts.push([m._data.lat,m._data.lng,1.0]);});
-  markersAROFUSA.forEach(m=>{if(map.hasLayer(m)) pts.push([m._data.lat,m._data.lng,1.0]);});
-  markersLIFA.forEach(m=>{if(map.hasLayer(m)) pts.push([m._data.lat,m._data.lng,1.0]);});
-  if(colegioLayer&&colegiosVisible) colegioLayer.eachLayer(l=>pts.push([l.getLatLng().lat,l.getLatLng().lng,0.7]));
-  if(heatLayer) map.removeLayer(heatLayer);
-  heatLayer = L.heatLayer(pts,{radius:38,blur:30,maxZoom:15,
-    gradient:{0.0:'#ffffb2',0.25:'#fecc5c',0.5:'#fd8d3c',0.75:'#f03b20',1.0:'#bd0026'}});
-  if(heatVisible) heatLayer.addTo(map);
-}
- 
-// ── UI ──
-// ══════════════════════════════════════════════════════════════
-// PIN DE USUARIO — click en el mapa
-// ══════════════════════════════════════════════════════════════
-let pingMode    = false;
-const userPins  = [];
- 
-const pinIcon = L.divIcon({
-  html:`<div style="position:relative;width:22px;height:22px;">
-    <div class="pin-ring"></div>
-    <div style="width:22px;height:22px;border-radius:50%;background:#e74c3c;
-      border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);
-      display:flex;align-items:center;justify-content:center;">
-      <span style="font-size:11px;">📍</span>
-    </div>
-  </div>`,
-  className:'', iconSize:[22,22], iconAnchor:[11,22], popupAnchor:[0,-24]
-});
- 
-window.togglePingMode = function(){
-  pingMode = !pingMode;
-  const btn = document.getElementById('btnPing');
-  if(pingMode){
-    btn.textContent = '📍 Pin ✓';
-    btn.classList.add('toggle-on');
-    document.body.classList.add('ping-mode');
-  } else {
-    btn.textContent = '📍 Pin';
-    btn.classList.remove('toggle-on');
-    document.body.classList.remove('ping-mode');
-  }
-};
- 
-window.borrarPin = function(id){
-  const idx = userPins.findIndex(p=>p._pinId===id);
-  if(idx===-1) return;
-  map.removeLayer(userPins[idx]);
-  userPins.splice(idx,1);
-};
- 
-window.borrarTodosPins = function(){
-  userPins.forEach(p=>map.removeLayer(p));
-  userPins.length=0;
-};
- 
-document.addEventListener('DOMContentLoaded', () => {
- 
-  // ── Leyenda ──
-  const legend = L.control({position:'bottomright'});
-  legend.onAdd = () => {
-    const d = document.createElement('div');
-    d.className = 'legend';
-    d.innerHTML = `
-      <h4>Referencias</h4>
-      <div class="legend-item"><div class="legend-dot" style="background:#1a6b3a"></div><span>ARF Primera A (Copa Gobernador Molinas)</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background:#2980b9"></div><span>ARF Primera B (Copa Santiago Pinasco)</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background:#8e44ad"></div><span>ARF Primera C (Copa Mariano Reyna)</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background:#e07b20"></div><span>ARDYTI Fútbol Infantil</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background:#2e7d32"></div><span>LIFA Fútbol Infantil</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background:#c0392b;border-radius:3px"></div><span>AROFUSA Futsal (FS)</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background:#0d6efd;border-radius:3px"></div><span>🎓 Sec. Pública (P)</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background:#e91e8c;border-radius:3px"></div><span>🎓 Sec. Privada (V)</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background:#546e7a;border-radius:3px"></div><span>🎓 Sec. s/dato (?)</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background:#00a650;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,166,80,0.5)"></div><span>🟢 🏡 Argenprop &mdash; Alquiler 4+ dorm.</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background:#ff6000;border-radius:6px;border:2px solid white;box-shadow:0 1px 3px rgba(255,96,0,0.5)"></div><span>🟠 🏠 ZonaProp &mdash; Alquiler 4 dorm.</span></div>
-      <div class="legend-item" style="flex-direction:column;align-items:flex-start;gap:3px;">
-        <span>🔥 Densidad de clubes</span>
-        <div class="heat-bar"></div>
-      </div>`;
-    return d;
-  };
-  legend.addTo(map);
- 
-  // ── Pin de usuario: click en mapa ──
-  map.on('click', function(e){
-    if(!pingMode) return;
-    const {lat,lng} = e.latlng;
-    const id = Date.now();
-    const mk = L.marker([lat,lng], {icon:pinIcon, zIndexOffset:1000});
-    mk._pinId = id;
     mk.bindPopup(`
       <div class="popup-content">
-        <h3 style="color:#e74c3c">📍 Pin</h3>
-        <p>🌐 ${lat.toFixed(5)}, ${lng.toFixed(5)}</p>
-        <div style="display:flex;gap:6px;margin-top:6px;">
-          <button onclick="borrarPin(${id})" style="flex:1;padding:4px 8px;border:none;
-            border-radius:6px;background:#e74c3c;color:white;cursor:pointer;font-size:0.72rem;font-weight:700;">
-            🗑 Borrar
-          </button>
-          <button onclick="borrarTodosPins()" style="flex:1;padding:4px 8px;border:none;
-            border-radius:6px;background:#888;color:white;cursor:pointer;font-size:0.72rem;font-weight:700;">
-            🗑 Todos
-          </button>
-        </div>
-      </div>`, {autoPan:false});
-    mk.addTo(map);
-    mk.openPopup();
-    userPins.push(mk);
-  });
+        <h3 style="background:${color};">🎓 Secundario Público</h3>
+        <p><b>${c.nombre}</b></p>
+        <p>📏 <b>${c.dist} m</b> de Pellegrini 9</p>
+        ${calle}${web}
+      </div>`, { maxWidth:270 });
  
-  // Badges, heat y zonas se aplican al terminar geocodificarTodos()
-  // actualizarBadges();
-  // buildHeat();
-  // Pre-calcular zona geográfica de cada marker — se hace en geocodificarTodos()
-  // precalcularZonas(markersARF);
-  // precalcularZonas(markersARDYTI);
-  // precalcularZonas(markersAROFUSA);
-  // precalcularZonas(markersLIFA);
+    mk.addTo(layerSec);
+  }
+ 
+  const n = lista.length;
+  document.getElementById('stats-sec').textContent =
+    `${n} colegio${n!==1?'s':''} secundario${n!==1?'s':''} público${n!==1?'s':''}`;
+  document.getElementById('badge-cnt').textContent = `${n} sec. públicos`;
+}
+ 
+async function buscarClubes(lat, lng, radioM) {
+  const delta = radioM / 111000;
+  const bbox = `${lat-delta},${lng-delta*1.5},${lat+delta},${lng+delta*1.5}`;
+  // Buscar: canchas de fútbol, clubes deportivos, asociaciones
+  const q = `[out:json][timeout:30];
+(
+  node["leisure"="pitch"]["sport"="soccer"](${bbox});
+  way["leisure"="pitch"]["sport"="soccer"](${bbox});
+  node["leisure"="pitch"]["sport"="football"](${bbox});
+  way["leisure"="pitch"]["sport"="football"](${bbox});
+  node["leisure"="sports_centre"]["sport"~"soccer|football"](${bbox});
+  way["leisure"="sports_centre"]["sport"~"soccer|football"](${bbox});
+  node["leisure"="club"]["sport"~"soccer|football"](${bbox});
+  node["amenity"="social_club"]["sport"~"soccer|football"](${bbox});
+  node["sport"="soccer"](${bbox});
+  node["sport"="football"](${bbox});
+  way["sport"="soccer"](${bbox});
+  way["sport"="football"](${bbox});
+  node["leisure"="sports_centre"](${bbox});
+  way["leisure"="sports_centre"](${bbox});
+  node["leisure"="stadium"](${bbox});
+  way["leisure"="stadium"](${bbox});
+);
+out center tags;`;
+ 
+  const resp = await fetch('https://overpass-api.de/api/interpreter', {
+    method:'POST', body:'data='+encodeURIComponent(q)
+  });
+  const data = await resp.json();
+ 
+  const seen = new Set();
+  const out  = [];
+ 
+  for (const el of data.elements) {
+    const clat = el.lat || (el.center && el.center.lat);
+    const clng = el.lon  || (el.center && el.center.lon);
+    if (!clat || !clng) continue;
+ 
+    const d = distM(lat, lng, clat, clng);
+    if (d > radioM) continue;
+ 
+    const tags = el.tags || {};
+    const nombre = tags.name || tags['name:es'] || '';
+    if (!nombre) continue;
+ 
+    const key = nombre.toLowerCase().replace(/\s/g,'') + Math.round(clat*10000);
+    if (seen.has(key)) continue;
+    seen.add(key);
+ 
+    const sport   = (tags.sport || '').toLowerCase();
+    const leisure = (tags.leisure || '').toLowerCase();
+    const nL      = nombre.toLowerCase();
+ 
+    // Confirmar que es fútbol/deportivo relevante
+    const esFutbol =
+      sport.includes('soccer') || sport.includes('football') ||
+      leisure === 'pitch' || leisure === 'stadium' ||
+      nL.includes('fútbol') || nL.includes('futbol') ||
+      nL.includes('club') || nL.includes('atletico') ||
+      nL.includes('atlético') || nL.includes('deportivo') ||
+      nL.includes('sport') || nL.includes('social');
+ 
+    if (!esFutbol && leisure === 'sports_centre') {
+      // Incluir centros deportivos genéricos igual
+    } else if (!esFutbol) continue;
+ 
+    // Tipo: cancha vs club
+    const esCancha = leisure === 'pitch' || leisure === 'stadium';
+ 
+    out.push({ nombre, clat, clng, dist:d, tags, esCancha, leisure, sport });
+  }
+ 
+  out.sort((a,b) => a.dist - b.dist);
+  return out;
+}
+ 
+function dibujarClubes(lista) {
+  layerClubs.clearLayers();
+  for (const c of lista) {
+    const color = c.esCancha ? '#1db954' : '#57e87a';
+    const radius = c.esCancha ? 9 : 10;
+ 
+    const mk = L.circleMarker([c.clat, c.clng], {
+      radius, fillColor:color, color:'#0d4a1a',
+      weight:2.5, opacity:1, fillOpacity:0.9
+    });
+ 
+    mk.bindTooltip(
+      `⚽ ${c.nombre.length>34 ? c.nombre.substring(0,33)+'…' : c.nombre}`,
+      { direction:'top' }
+    );
+ 
+    const tipoLabel = c.esCancha ? 'Cancha de Fútbol' :
+      (c.leisure === 'stadium' ? 'Estadio' : 'Club / Centro Deportivo');
+    const calle = c.tags['addr:street']
+      ? `<p>📍 ${c.tags['addr:street']} ${c.tags['addr:housenumber']||''}</p>` : '';
+    const web = c.tags.website
+      ? `<p><a href="${c.tags.website}" target="_blank" style="color:#57e87a;">🌐 Sitio web</a></p>` : '';
+ 
+    mk.bindPopup(`
+      <div class="popup-content">
+        <h3 style="background:${color};color:#0d4a1a;">⚽ ${tipoLabel}</h3>
+        <p><b>${c.nombre}</b></p>
+        <p>📏 <b>${c.dist} m</b> de Pellegrini 9</p>
+        ${calle}${web}
+      </div>`, { maxWidth:270 });
+ 
+    mk.addTo(layerClubs);
+  }
+ 
+  const n = lista.length;
+  document.getElementById('stats-clubs').textContent =
+    `${n} club${n!==1?'es':''} / cancha${n!==1?'s':''} de fútbol`;
+  document.getElementById('badge-clubs').textContent = `${n} clubes ⚽`;
+}
+ 
+async function actualizarRadio(r) {
+  const km = r>=1000 ? (r/1000).toFixed(1)+'km' : r+'m';
+  document.getElementById('badge-radio').textContent = `Radio ${km}`;
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('stats-sec').textContent = 'buscando…';
+  document.getElementById('stats-clubs').textContent = 'buscando…';
+ 
+  if (radioCircle) map.removeLayer(radioCircle);
+  radioCircle = L.circle(casaLL, {
+    radius:r, color:'#ff6000', weight:2, opacity:0.65,
+    fillColor:'#ff6000', fillOpacity:0.05, dashArray:'6 5'
+  }).addTo(map);
+  map.fitBounds(radioCircle.getBounds(), { padding:[40,40] });
+ 
+  document.getElementById('badge-clubs').textContent = 'buscando…';
+ 
+  try {
+    const [lista, clubs] = await Promise.all([
+      buscarSecPublicos(casaLL.lat, casaLL.lng, r),
+      buscarClubes(casaLL.lat, casaLL.lng, r)
+    ]);
+    dibujar(lista);
+    dibujarClubes(clubs);
+  } catch(e) {
+    document.getElementById('stats-sec').textContent = 'Error al conectar con Overpass API';
+  }
+  document.getElementById('loading').style.display = 'none';
+}
+ 
+async function init() {
+  let geo = await geocodificar('Avenida Pellegrini 9');
+  if (!geo) geo = { lat:-32.9610, lng:-60.6447 };
+  casaLL = L.latLng(geo.lat, geo.lng);
+  map.setView(casaLL, 15);
+ 
+  L.marker(casaLL, { icon:iconCasa(), zIndexOffset:9999 })
+    .bindPopup(`
+      <div class="popup-content">
+        <h3 style="background:#ff6000;">🏠 Alquiler · ZonaProp</h3>
+        <p>📍 <b>Av. Pellegrini 9</b>, Distrito Sur</p>
+        <p>💰 <b>$ 1.900.000</b> / mes</p>
+        <p style="font-size:0.7rem;color:#888;">340 m² · 5 amb. · 4 dorm.</p>
+        <a href="${LINK_ZP}" target="_blank" class="popup-btn" style="background:#ff6000;">🔗 Ver en ZonaProp</a>
+      </div>`, { maxWidth:270 })
+    .addTo(map);
+ 
+  await actualizarRadio(800);
+}
+ 
+document.querySelectorAll('.rbtn[data-r]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.rbtn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    actualizarRadio(parseInt(btn.dataset.r));
+  });
 });
  
-window.setLiga = function(liga) {
-  ligaActiva = liga;
-  document.getElementById('tabARF').className  = 'liga-tab' + (liga==='ARF'    ? ' active-arf'  : '');
-  document.getElementById('tabARD').className  = 'liga-tab' + (liga==='ARDYTI' ? ' active-ard'  : '');
-  document.getElementById('tabAFS').className  = 'liga-tab' + (liga==='AROFUSA'? ' active-afs'  : '');
-  document.getElementById('tabLFA').className  = 'liga-tab' + (liga==='LIFA'   ? ' active-lfa'  : '');
-  document.getElementById('tabBOTH').className = 'liga-tab' + (liga==='BOTH'   ? ' active-both' : '');
-  // Resetear estilos especiales de tabs inactivos
-  const tabAFS = document.getElementById('tabAFS');
-  if (liga !== 'AROFUSA') { tabAFS.style.borderColor = '#c0392b'; tabAFS.style.color = '#c0392b'; }
-  else { tabAFS.style.borderColor = ''; tabAFS.style.color = ''; }
-  const tabLFA = document.getElementById('tabLFA');
-  if (liga !== 'LIFA') { tabLFA.style.borderColor = '#2e7d32'; tabLFA.style.color = '#2e7d32'; }
-  else { tabLFA.style.borderColor = ''; tabLFA.style.color = ''; }
-  if (liga !== 'ARF' && liga !== 'BOTH') divActiva = 'all';
-  aplicarFiltros();
-  buildHeat();
-};
- 
-window.setDiv = function(btn, div) {
-  divActiva = div;
-  document.querySelectorAll('.div-filters .filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  aplicarFiltros();
-  buildHeat();
-};
- 
- 
-window.toggleHeat = function() {
-  const btn = document.getElementById('btnHeat');
-  heatVisible = !heatVisible;
-  if (heatVisible) {
-    buildHeat();
-    btn.textContent='🔥 Densidad ✓'; btn.classList.add('toggle-on');
-  } else {
-    if(heatLayer) map.removeLayer(heatLayer);
-    btn.textContent='🔥 Densidad'; btn.classList.remove('toggle-on');
-  }
-};
- 
-// ══════════════════════════════════════════════════════════════
-// ══════════════════════════════════════════════════════════════
-// BUSCADOR — dos campos separados
-// Campo 1 (⚽): búsqueda local de clubes por nombre/liga/división
-// Campo 2 (📍): geocodificación de dirección → pin + clubes cercanos
-// ══════════════════════════════════════════════════════════════
-(function initSearch() {
- 
-  // ── Helpers compartidos ─────────────────────────────────────
-  function getTodos() { return [...markersARF, ...markersARDYTI, ...markersAROFUSA, ...markersLIFA]; }
- 
-  function badgeColor(c) {
-    if (c.liga==='ARDYTI')  return '#e07b20';
-    if (c.liga==='AROFUSA') return '#c0392b';
-    if (c.liga==='LIFA')    return '#2e7d32';
-    if (c.div==='A') return '#1a6b3a';
-    if (c.div==='B') return '#2980b9';
-    return '#8e44ad';
-  }
-  function badgeLabel(c) {
-    if (c.liga==='ARDYTI')  return 'ARDYTI';
-    if (c.liga==='AROFUSA') return 'AROFUSA';
-    if (c.liga==='LIFA')    return 'LIFA';
-    if (c.div==='A') return 'ARF 1ª A';
-    if (c.div==='B') return 'ARF 1ª B';
-    return 'ARF 1ª C';
-  }
-  function norm(s) {
-    return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s]/g,' ');
-  }
-  function hl(text, q) {
-    if (!q||!text) return text;
-    const words = norm(q).trim().split(/\s+/).filter(Boolean).map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
-    if (!words.length) return text;
-    const re = new RegExp(`(${words.join('|')})`, 'gi');
-    const normT = norm(text);
-    let out='', i=0;
-    normT.replace(re, (m, _, offset) => {
-      out += text.slice(i, offset) + `<mark style="background:#fff3b0;border-radius:2px;padding:0 1px">${text.slice(offset, offset+m.length)}</mark>`;
-      i = offset + m.length;
-    });
-    return out + text.slice(i) || text;
-  }
-  function distM(a,b,c,d){
-    const R=6371000, dLat=(c-a)*Math.PI/180, dLng=(d-b)*Math.PI/180;
-    const x=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLng/2)**2;
-    return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
-  }
- 
-  // ── Dropdown helpers ─────────────────────────────────────────
-  function openDD(ddId, anchorEl) {
-    const dd = document.getElementById(ddId);
-    if (!dd || !anchorEl) return;
-    const rect = anchorEl.getBoundingClientRect();
-    dd.style.top   = (rect.bottom + 4) + 'px';
-    dd.style.right  = (window.innerWidth - rect.right) + 'px';
-    dd.style.left   = 'auto';
-    dd.classList.add('open');
-  }
-  function closeDD(ddId) {
-    const dd = document.getElementById(ddId);
-    if (dd) dd.classList.remove('open');
-  }
- 
-  // Cerrar dropdowns al hacer click fuera
-  document.addEventListener('click', e => {
-    const box = document.getElementById('searchBox');
-    const ddC = document.getElementById('ddClub');
-    const ddD = document.getElementById('ddDir');
-    if (box && !box.contains(e.target)) {
-      if (ddC && !ddC.contains(e.target)) closeDD('ddClub');
-      if (ddD && !ddD.contains(e.target)) closeDD('ddDir');
-    }
-  });
- 
-  // ══════════════════════════════════════════════════════════════
-  // CAMPO 1 — Búsqueda de clubes
-  // ══════════════════════════════════════════════════════════════
-  let clubResults = [];
-  let clubSelIdx  = -1;
-  let clubTimer;
- 
-  function scoreClub(c, terms) {
-    const n = norm(c.nombre), d = norm(c.direccion), l = norm(c.liga+' '+badgeLabel(c));
-    let s=0;
-    terms.forEach(t=>{
-      if (n.startsWith(t)) s+=10; else if (n.includes(t)) s+=7;
-      if (d.includes(t)) s+=4;
-      if (l.includes(t)) s+=2;
-    });
-    return s;
-  }
- 
-  function searchClubs(q) {
-    const terms = norm(q).trim().split(/\s+/).filter(Boolean);
-    return getTodos()
-      .map(m=>({m, s:scoreClub(m._data,terms)}))
-      .filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,12).map(x=>x.m);
-  }
- 
-  function renderClubs(matches, q) {
-    const res = document.getElementById('resClub');
-    const cnt = document.getElementById('cntClub');
-    if (!matches.length) {
-      res.innerHTML = `<div class="search-empty">Sin resultados para "<b>${q}</b>"</div>`;
-      cnt.textContent = '';
-      openDD('ddClub', document.getElementById('sfClub'));
-      return;
-    }
-    cnt.textContent = `${matches.length} club${matches.length!==1?'es':''}`;
-    res.innerHTML = matches.map((m,i) => {
-      const c=m._data, bc=badgeColor(c), bl=badgeLabel(c);
-      return `<div class="search-result-item" data-idx="${i}" onclick="clubClick(${i})">
-        <div class="sri-nombre">${hl(c.nombre,q)}</div>
-        <div class="sri-dir">📍 ${hl(c.direccion,q)}</div>
-        <span class="sri-badge" style="background:${bc}">${bl}</span>
-      </div>`;
-    }).join('');
-    openDD('ddClub', document.getElementById('sfClub'));
-  }
- 
-  window.clubClick = function(idx) {
-    const m = clubResults[idx];
-    if (!m) return;
-    closeDD('ddClub');
-    const c = m._data;
-    if (!map.hasLayer(m)) {
-      setLiga('BOTH'); divActiva='all'; zonaActiva='TODAS';
-      document.querySelectorAll('[data-div]').forEach(b=>b.classList.remove('active'));
-      const ba = document.querySelector('[data-div="all"]'); if (ba) ba.classList.add('active');
-      ['N','NE','E','SE','S','SO','O','NO'].forEach(z=>{ const b=document.getElementById('z'+z); if(b) b.classList.remove('active'); });
-      const bT = document.getElementById('zTODAS'); if (bT) bT.classList.add('active');
-    }
-    map.flyTo([c.lat, c.lng], 16, { duration: 0.8 });
-    setTimeout(()=>{ if (m && map.hasLayer(m)) m.openPopup(); }, 900);
-    // Pin pulsante breve
-    const pulse = L.circleMarker([c.lat,c.lng],{radius:18,color:'#f0c040',weight:3,fillOpacity:0,className:'pulse-ring'}).addTo(map);
-    setTimeout(()=>{ try { map.removeLayer(pulse); } catch(e){} }, 2500);
-  };
- 
-  window.clearClubSearch = function() {
-    document.getElementById('inputClub').value = '';
-    document.getElementById('clearClub').style.display = 'none';
-    closeDD('ddClub');
-    clubResults=[]; clubSelIdx=-1;
-    document.getElementById('inputClub').focus();
-  };
- 
-  // Eventos campo club
-  const inputClub = document.getElementById('inputClub');
-  inputClub.addEventListener('input', e => {
-    const q = e.target.value;
-    document.getElementById('clearClub').style.display = q ? 'block' : 'none';
-    clearTimeout(clubTimer);
-    if (!q.trim()) { closeDD('ddClub'); return; }
-    clubTimer = setTimeout(() => {
-      clubResults = searchClubs(q);
-      renderClubs(clubResults, q);
-    }, 180);
-  });
-  inputClub.addEventListener('keydown', e => {
-    const items = document.querySelectorAll('#ddClub .search-result-item');
-    if (e.key==='ArrowDown') { e.preventDefault(); clubSelIdx=Math.min(clubSelIdx+1,items.length-1); }
-    else if (e.key==='ArrowUp') { e.preventDefault(); clubSelIdx=Math.max(clubSelIdx-1,0); }
-    else if (e.key==='Enter') { if (clubSelIdx>=0) clubClick(clubSelIdx); return; }
-    else if (e.key==='Escape') { clearClubSearch(); return; }
-    else return;
-    items.forEach(el=>el.classList.remove('highlighted'));
-    if (items[clubSelIdx]) { items[clubSelIdx].classList.add('highlighted'); items[clubSelIdx].scrollIntoView({block:'nearest'}); }
-  });
-  inputClub.addEventListener('focus', () => {
-    if (inputClub.value.trim() && document.getElementById('resClub').innerHTML) openDD('ddClub', document.getElementById('sfClub'));
-  });
- 
-  // ══════════════════════════════════════════════════════════════
-  // CAMPO 2 — Geocodificación de dirección + pin
-  // ══════════════════════════════════════════════════════════════
-  let geoResults  = [];
-  let dirSelIdx   = -1;
-  let dirTimer;
-  let geoPin      = null;
-  let geoCircle   = null;
-  let nearbyMode  = false;
-  let nearbyList  = [];
- 
-  function normGeoref(s) {
-    return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-  }
-  function separarInterseccion(q) {
-    const m = q.match(/^(.+?)\s+(?:y|e|esq\.?|&)\s+(.+)$/i);
-    return m ? [m[1].trim(), m[2].trim()] : null;
-  }
- 
-  async function geocodeGeoref(q) {
-    const inter = separarInterseccion(q);
-    if (inter) {
-      // Buscar dos calles y calcular punto medio
-      const [a, b] = inter;
-      const base = 'https://apis.datos.gob.ar/georef/api/calles?provincia=santa+fe&departamento=rosario&max=3&campos=nombre,geometria&nombre=';
-      const [rA, rB] = await Promise.all([
-        fetch(base + encodeURIComponent(normGeoref(a))).then(r=>r.json()),
-        fetch(base + encodeURIComponent(normGeoref(b))).then(r=>r.json())
-      ]);
-      const cA = rA.calles?.[0], cB = rB.calles?.[0];
-      if (cA && cB) {
-        function centroide(c) {
-          const pts = c.geometria?.coordinates?.[0];
-          if (!pts||!pts.length) return null;
-          return { lat: pts.reduce((s,p)=>s+p[1],0)/pts.length, lon: pts.reduce((s,p)=>s+p[0],0)/pts.length };
-        }
-        const pA = centroide(cA), pB = centroide(cB);
-        if (pA && pB) return [{
-          lat: ((pA.lat+pB.lat)/2).toString(), lon: ((pA.lon+pB.lon)/2).toString(),
-          display_name: `${cA.nombre} y ${cB.nombre}, Rosario`,
-          _label: `${cA.nombre} y ${cB.nombre}`, _fuente: 'georef_aprox'
-        }];
-      }
-    }
-    // Dirección simple
-    const r = await fetch(`https://apis.datos.gob.ar/georef/api/direcciones?provincia=santa+fe&departamento=rosario&max=5&direccion=${encodeURIComponent(normGeoref(q))}`).then(r=>r.json());
-    return (r.direcciones||[]).map(d=>({
-      lat: d.ubicacion?.lat?.toString(), lon: d.ubicacion?.lon?.toString(),
-      display_name: d.nomenclatura || d.calle?.nombre || q,
-      _label: d.calle?.nombre ? `${d.calle.nombre} ${d.altura?.valor||''}`.trim() : q,
-      _fuente: 'georef'
-    })).filter(x=>x.lat && x.lon);
-  }
- 
-  async function geocodeNominatim(q) {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=ar&city=Rosario&q=${encodeURIComponent(q)}`;
-    const r = await fetch(url, {headers:{'Accept-Language':'es'}}).then(r=>r.json());
-    return r.map(x=>({...x, _fuente:'osm', _label: x.display_name.split(',')[0]}));
-  }
- 
-  async function geocode(q) {
-    try {
-      const res = await geocodeGeoref(q);
-      if (res.length) return res;
-    } catch(e) {}
-    try { return await geocodeNominatim(q); } catch(e) { return []; }
-  }
- 
-  function placePin(lat, lng, label, fuente) {
-    if (geoPin)    { map.removeLayer(geoPin); geoPin=null; }
-    if (geoCircle) { map.removeLayer(geoCircle); geoCircle=null; }
-    const badgeTxt = fuente==='georef' ? '✓ Georef' : fuente==='georef_aprox' ? '~ Aprox.' : 'OSM';
-    const badgeCol = fuente==='georef' ? '#1a6b3a' : fuente==='georef_aprox' ? '#e67e22' : '#888';
-    geoPin = L.marker([lat,lng], {
-      icon: L.divIcon({
-        className:'', iconAnchor:[14,36], popupAnchor:[0,-36],
-        html:`<div style="background:#e74c3c;width:28px;height:28px;border-radius:50% 50% 50% 0;
-          transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4)"></div>`
-      }), zIndexOffset:1200
-    }).addTo(map)
-      .bindPopup(`<b>📍 ${label}</b><br><span style="font-size:0.65rem;background:${badgeCol};color:white;padding:1px 6px;border-radius:8px">${badgeTxt}</span>`)
-      .openPopup();
-    geoCircle = L.circle([lat,lng],{radius:400,color:'#e74c3c',weight:1.5,fillOpacity:0.06}).addTo(map);
-  }
- 
-  function renderGeoResults(results, q) {
-    const res = document.getElementById('resDir');
-    const cnt = document.getElementById('cntDir');
-    if (!results.length) {
-      res.innerHTML = `<div class="search-empty">No se encontró "<b>${q}</b>" en Rosario.<br><small>Probá sin tildes o simplificá la dirección</small></div>`;
-      cnt.textContent = '';
-      openDD('ddDir', document.getElementById('sfDir'));
-      return;
-    }
-    cnt.textContent = `${results.length} resultado${results.length!==1?'s':''}`;
-    res.innerHTML = results.map((r,i) => {
-      const fuente = r._fuente||'';
-      const bc = fuente==='georef'?'#1a6b3a': fuente==='georef_aprox'?'#e67e22':'#888';
-      const bt = fuente==='georef'?'✓ Georef': fuente==='georef_aprox'?'~ Aprox.':'OSM';
-      const label = r._label || r.display_name.split(',')[0];
-      return `<div class="search-result-item" data-idx="${i}" onclick="dirClick(${i})">
-        <div class="sri-nombre" style="display:flex;align-items:center;gap:5px">
-          📍 <b>${label}</b>
-          <span style="font-size:0.58rem;background:${bc};color:white;padding:1px 6px;border-radius:8px">${bt}</span>
-        </div>
-        <div class="sri-dir" style="color:#1a3a6b;font-weight:600;margin-top:2px">Poner pin aquí →</div>
-      </div>`;
-    }).join('');
-    openDD('ddDir', document.getElementById('sfDir'));
-  }
- 
-  function renderNearby(lat, lng, label) {
-    const res = document.getElementById('resDir');
-    const cnt = document.getElementById('cntDir');
-    const todos = getTodos();
-    nearbyList = todos.map(m=>({m, d:distM(lat,lng,m._data.lat,m._data.lng)}))
-      .sort((a,b)=>a.d-b.d).slice(0,8).map(x=>x.m);
-    cnt.textContent = `${nearbyList.length} clubes cercanos`;
-    const cab = `<div style="font-size:0.65rem;color:#888;padding:6px 10px 4px;border-bottom:1px solid #eee">
-      <b>📍 ${label}</b> — clubes más cercanos:</div>`;
-    res.innerHTML = cab + nearbyList.map((m,i)=>{
-      const c=m._data, bc=badgeColor(c), bl=badgeLabel(c);
-      const d = distM(lat,lng,c.lat,c.lng);
-      const dStr = d<1000 ? Math.round(d)+'m' : (d/1000).toFixed(1)+'km';
-      return `<div class="search-result-item" data-idx="${i}" onclick="nearbyClick(${i})">
-        <div class="sri-nombre">${c.nombre} <span style="font-weight:400;color:#999;font-size:0.62rem">${dStr}</span></div>
-        <div class="sri-dir">📍 ${c.direccion}</div>
-        <span class="sri-badge" style="background:${bc}">${bl}</span>
-      </div>`;
-    }).join('');
-    nearbyMode = true;
-    openDD('ddDir', document.getElementById('sfDir'));
-  }
- 
-  window.dirClick = function(idx) {
-    const place = geoResults[idx];
-    if (!place) return;
-    const lat = parseFloat(place.lat), lng = parseFloat(place.lon);
-    const label = place._label || place.display_name.split(',')[0];
-    placePin(lat, lng, label, place._fuente);
-    map.flyTo([lat,lng], 16, {duration:0.8});
-    renderNearby(lat, lng, label);
-  };
- 
-  window.nearbyClick = function(idx) {
-    const m = nearbyList[idx];
-    if (!m) return;
-    closeDD('ddDir');
-    const c = m._data;
-    map.flyTo([c.lat,c.lng], 16, {duration:0.8});
-    setTimeout(()=>{ if (map.hasLayer(m)) m.openPopup(); }, 900);
-  };
- 
-  window.clearDirSearch = function() {
-    document.getElementById('inputDir').value = '';
-    document.getElementById('clearDir').style.display = 'none';
-    closeDD('ddDir');
-    geoResults=[]; dirSelIdx=-1; nearbyMode=false; nearbyList=[];
-    if (geoPin)    { map.removeLayer(geoPin); geoPin=null; }
-    if (geoCircle) { map.removeLayer(geoCircle); geoCircle=null; }
-    document.getElementById('inputDir').focus();
-  };
- 
-  // Eventos campo dirección
-  const inputDir = document.getElementById('inputDir');
-  inputDir.addEventListener('input', e => {
-    const q = e.target.value;
-    document.getElementById('clearDir').style.display = q ? 'block' : 'none';
-    clearTimeout(dirTimer);
-    nearbyMode = false;
-    if (!q.trim()) { closeDD('ddDir'); return; }
-    document.getElementById('resDir').innerHTML = `<div class="search-empty">🔍 Buscando <b>${q}</b>…</div>`;
-    openDD('ddDir', document.getElementById('sfDir'));
-    dirTimer = setTimeout(async () => {
-      geoResults = await geocode(q);
-      renderGeoResults(geoResults, q);
-    }, 550);
-  });
-  inputDir.addEventListener('keydown', e => {
-    const ddId = nearbyMode ? 'ddDir' : 'ddDir';
-    const items = document.querySelectorAll('#ddDir .search-result-item');
-    if (e.key==='ArrowDown') { e.preventDefault(); dirSelIdx=Math.min(dirSelIdx+1,items.length-1); }
-    else if (e.key==='ArrowUp') { e.preventDefault(); dirSelIdx=Math.max(dirSelIdx-1,0); }
-    else if (e.key==='Enter') {
-      if (dirSelIdx>=0) { nearbyMode ? nearbyClick(dirSelIdx) : dirClick(dirSelIdx); }
-      else if (!nearbyMode) { const q=inputDir.value; if(q.trim()) geocode(q).then(r=>{ geoResults=r; renderGeoResults(r,q); }); }
-      return;
-    } else if (e.key==='Escape') { clearDirSearch(); return; }
-    else return;
-    items.forEach(el=>el.classList.remove('highlighted'));
-    if (items[dirSelIdx]) { items[dirSelIdx].classList.add('highlighted'); items[dirSelIdx].scrollIntoView({block:'nearest'}); }
-  });
-  inputDir.addEventListener('focus', () => {
-    if (inputDir.value.trim() && document.getElementById('resDir').innerHTML) openDD('ddDir', document.getElementById('sfDir'));
-  });
- 
-  // ── Evitar propagación al mapa ──────────────────────────────
-  ['searchBox','ddClub','ddDir'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { L.DomEvent.disableClickPropagation(el); L.DomEvent.disableScrollPropagation(el); }
-  });
-})();
+init();
 </script>
 </body>
 </html>
